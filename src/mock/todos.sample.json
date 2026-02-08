@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "title": "APIの疎通確認",
+    "description": "GET /api/todos が叩けるか確認する",
+    "priority": 3,
+    "due_date": "2026-02-05",
+    "status": "todo",
+    "category": "開発"
+  },
+  {
+    "id": 2,
+    "title": "ToDo一覧UIを作る",
+    "description": "統計＋並び替え＋一覧のレイアウトを整える",
+    "priority": 2,
+    "due_date": "2026-02-03",
+    "status": "in_progress",
+    "category": "フロント"
+  },
+  {
+    "id": 3,
+    "title": "完了タスクを確認",
+    "description": "完了状態の見た目（バッジ/取り消し線）を確認する",
+    "priority": 1,
+    "due_date": "2026-01-25",
+    "status": "done",
+    "category": "テスト"
+  }
+]
