@@ -37,19 +37,23 @@ export function TodoToolbar({
         {/* ✅ ステータス切替 */}
         <select style={styles.select} value={statusFilter} onChange={(e) => onChangeStatusFilter(e.target.value)}>
           <option value="all">全ステータス</option>
-          <option value="todo">未着手</option>
+          <option value="pending">未着手</option>
           <option value="in_progress">進行中</option>
-          <option value="done">完了</option>
+          <option value="completed">完了</option>
         </select>
 
         {/* ✅ カテゴリ切替 */}
-        <select style={styles.select} value={categoryFilter} onChange={(e) => onChangeCategoryFilter(e.target.value)}>
-          {categories.map((c) => (
-            <option key={c} value={c}>
-              {c === "all" ? "全カテゴリ" : c}
-            </option>
-          ))}
+        <select
+          style={styles.select}
+          value={categoryFilter}
+          onChange={(e) => onChangeCategoryFilter(e.target.value)}>
+
+            <option value="all">全カテゴリ</option>
+            <option value="仕事">仕事</option>
+            <option value="プライベート">プライベート</option>
+            <option value="学習">学習</option>
         </select>
+
 
         {/* ✅ カテゴリ別表示（グループ表示） */}
         <label style={styles.checkbox}>

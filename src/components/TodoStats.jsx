@@ -33,7 +33,7 @@ export function TodoStats({ todos }) {
   const statusCounts = countBy(
     todos,
     (t) => {
-      if (t.status === "done") return "完了";
+      if (t.status === "completed") return "完了";
       if (t.status === "in_progress") return "進行中";
       return "未着手";
     },

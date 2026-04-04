@@ -19,7 +19,7 @@ function toYmd(date) {
 }
 
 function statusLabel(status) {
-  if (status === "done") return "完了";
+  if (status === "completed") return "完了";
   if (status === "in_progress") return "進行中";
   return "未着手";
 }

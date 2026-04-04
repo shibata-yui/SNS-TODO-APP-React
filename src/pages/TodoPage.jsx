@@ -1,3 +1,7 @@
+function nowIso() {
+  return new Date().toISOString();
+}
+
 import { useMemo, useState } from "react";
 import sampleTodos from "../mock/todos.sample.json";
 import { TodoStats } from "../components/TodoStats";
@@ -54,13 +58,44 @@ export function TodoPage() {
 
   // ✅ 作成
   function handleCreate(payload) {
-    setTodos((prev) => [{ ...payload, id: Date.now() }, ...prev]);
-  }
+  const now = nowIso();
+  setTodos((prev) => [
+    {
+      ...payload,
+      id: Date.now(),
+      created_at: now,
+      updated_at: now,
+      completed_at: payload.status === "completed" ? now : null,
+    },
+    ...prev,
+  ]);
+}
 
   // ✅ 編集（更新）
   function handleUpdate(id, patch) {
-    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
-  }
+  const now = nowIso();
+
+  setTodos((prev) =>
+    prev.map((t) => {
+      if (t.id !== id) return t;
+
+      const next = { ...t, ...patch, updated_at: now };
+
+      // 仕様：完了時は完了日時を記録
+      if (t.status !== "completed" && next.status === "completed") {
+        next.completed_at = now;
+      }
+
+      // もし「完了から戻す」仕様にするなら、ここで null に戻すか決める
+      // next.status !== "completed" の場合に completed_at を残す/消すは要件次第
+      if (next.status !== "completed") {
+        next.completed_at = null;
+      }
+
+      return next;
+    })
+  );
+}
 
   // ✅ 削除（1件）
   function handleDelete(id) {
@@ -68,9 +103,9 @@ export function TodoPage() {
   }
 
   // ✅ 完了タスク一括削除
-  function handleBulkDeleteDone() {
-    setTodos((prev) => prev.filter((t) => t.status !== "done"));
-  }
+function handleBulkDeleteDone() {
+  setTodos((prev) => prev.filter((t) => t.status !== "completed"));
+}
 
   // ✅ カテゴリ別表示用にまとめる
   const groupedByCategoryList = useMemo(() => {
@@ -105,7 +140,7 @@ export function TodoPage() {
             groupByCategory={groupByCategory}
             onToggleGroupByCategory={() => setGroupByCategory((v) => !v)}
             onBulkDeleteDone={handleBulkDeleteDone}
-            doneCount={todos.filter((t) => t.status === "done").length}
+            doneCount={todos.filter((t) => t.status === "completed").length}
           />
 
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>

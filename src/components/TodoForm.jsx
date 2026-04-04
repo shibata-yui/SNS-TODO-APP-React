@@ -10,8 +10,8 @@ export function TodoForm({
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState(2);
   const [dueDate, setDueDate] = useState("");
-  const [status, setStatus] = useState("todo");
-  const [category, setCategory] = useState("");
+  const [status, setStatus] = useState("pending");
+  const [category, setCategory] = useState("仕事");
   const [error, setError] = useState("");
 
   // ✅ 編集時：初期値を入れる
@@ -22,7 +22,7 @@ export function TodoForm({
     setPriority(initialValues.priority ?? 2);
     setDueDate(initialValues.due_date ?? "");
     setStatus(initialValues.status ?? "todo");
-    setCategory(initialValues.category ?? "");
+    setCategory(initialValues.category ?? "仕事");
   }, [initialValues]);
 
   function handleSubmit(e) {
@@ -88,16 +88,27 @@ export function TodoForm({
         <label style={styles.label}>
           ステータス
           <select style={styles.input} value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="todo">未着手</option>
+            <option value="pending">未着手</option>
             <option value="in_progress">進行中</option>
-            <option value="done">完了</option>
+            <option value="completed">完了</option>
           </select>
         </label>
 
         <label style={styles.label}>
-          カテゴリ
-          <input style={styles.input} value={category} onChange={(e) => setCategory(e.target.value)} placeholder="例：開発" />
+        カテゴリ
+          <select
+            style={styles.input}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}>
+
+            <option value="仕事">仕事</option>
+            <option value="プライベート">プライベート</option>
+            <option value="学習">学習</option>
+          </select>
+
+          <div style={{ fontSize: 12, opacity: 0.6 }}>例：仕事</div>
         </label>
+
       </div>
 
       <div style={{ display: "flex", gap: 8 }}>

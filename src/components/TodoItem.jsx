@@ -2,27 +2,41 @@ import { useState } from "react";
 import { TodoForm } from "./TodoForm";
 
 function badgeText(status) {
-  if (status === "done") return "完了";
+  if (status === "completed") return "完了";
   if (status === "in_progress") return "進行中";
-  return "未着手";
+  return "未着手"; // pending を想定
 }
 
 export function TodoItem({ todo, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
-  const isDone = todo.status === "done";
 
-  function quickToggleDone() {
-    const next = isDone ? "todo" : "done";
+  const isCompleted = todo.status === "completed";
+
+  function quickToggleCompleted() {
+    // ✅ シンプル版：完了 ↔ 未着手（pending）
+    // 設計書の順番通りに「未着手→進行中→完了」ボタンにしたい場合は下に別案あり
+    const next = isCompleted ? "pending" : "completed";
     onUpdate?.(todo.id, { status: next });
   }
 
   return (
     <div style={styles.item}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 12,
+          alignItems: "flex-start",
+        }}
+      >
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <button type="button" onClick={quickToggleDone} style={styles.smallBtn}>
-              {isDone ? "未完了に戻す" : "完了にする"}
+            <button
+              type="button"
+              onClick={quickToggleCompleted}
+              style={styles.smallBtn}
+            >
+              {isCompleted ? "未完了に戻す" : "完了にする"}
             </button>
 
             <span style={styles.badge}>{badgeText(todo.status)}</span>
@@ -31,8 +45,8 @@ export function TodoItem({ todo, onUpdate, onDelete }) {
           <div
             style={{
               ...styles.title,
-              textDecoration: isDone ? "line-through" : "none",
-              opacity: isDone ? 0.7 : 1,
+              textDecoration: isCompleted ? "line-through" : "none",
+              opacity: isCompleted ? 0.7 : 1,
               marginTop: 8,
             }}
           >
@@ -49,7 +63,11 @@ export function TodoItem({ todo, onUpdate, onDelete }) {
         </div>
 
         <div style={{ display: "flex", gap: 8 }}>
-          <button type="button" style={styles.smallBtn} onClick={() => setEditing((v) => !v)}>
+          <button
+            type="button"
+            style={styles.smallBtn}
+            onClick={() => setEditing((v) => !v)}
+          >
             {editing ? "閉じる" : "編集"}
           </button>
 
