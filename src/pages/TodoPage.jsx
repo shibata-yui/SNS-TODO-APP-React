@@ -1,18 +1,26 @@
-function nowIso() {
-  return new Date().toISOString();
-}
+// function nowIso() {
+//   return new Date().toISOString();
+// }
 
-import { useMemo, useState } from "react";
-import sampleTodos from "../mock/todos.sample.json";
+import { useMemo, useState, useEffect } from "react";
+// import sampleTodos from "../mock/todos.sample.json";
 import { TodoStats } from "../components/TodoStats";
 import { TodoToolbar } from "../components/TodoToolbar";
 import { TodoList } from "../components/TodoList";
 import { TodoForm } from "../components/TodoForm";
 import { ViewToggle } from "../components/ViewToggle";
 import { TodoCalendar } from "../components/TodoCalendar";
+// バックと繋ぐにあたって追記↓
+// import { useEffect } from "react";
+import { fetchTodos, createTodo, updateTodo, deleteTodo } from "../api/todos";
 
 export function TodoPage() {
-  const [todos, setTodos] = useState(sampleTodos);
+  // const [todos, setTodos] = useState(sampleTodos);
+  // バックと繋ぐにあたって変更
+  const [todos, setTodos] = useState([]);
+  useEffect(() => {
+  fetchTodos().then(setTodos);
+}, []);
 
   const [view, setView] = useState("list"); // list / calendar
   const [sortKey, setSortKey] = useState("due_date"); // due_date / priority / status
@@ -22,6 +30,24 @@ export function TodoPage() {
   const [statusFilter, setStatusFilter] = useState("all"); // all / todo / in_progress / done
   const [categoryFilter, setCategoryFilter] = useState("all"); // all or category name
   const [groupByCategory, setGroupByCategory] = useState(false); // カテゴリ別表示
+
+
+// 最初に一覧を取得(※バックと繋ぐにあたって追記)
+  useEffect(() => {
+    async function loadTodos() {
+      try {
+        const data = await fetchTodos();
+        setTodos(data);
+      } catch (error) {
+        console.error("ToDo一覧取得エラー:", error);
+        alert("ToDo一覧の取得に失敗しました。Laravel側が起動しているか確認してください。");
+      }
+    }
+
+    loadTodos();
+  }, []);
+
+
 
   const categories = useMemo(() => {
     const set = new Set();
@@ -57,55 +83,105 @@ export function TodoPage() {
   }, [todos, sortKey, query, statusFilter, categoryFilter]);
 
   // ✅ 作成
-  function handleCreate(payload) {
-  const now = nowIso();
-  setTodos((prev) => [
-    {
-      ...payload,
-      id: Date.now(),
-      created_at: now,
-      updated_at: now,
-      completed_at: payload.status === "completed" ? now : null,
-    },
-    ...prev,
-  ]);
-}
+//   function handleCreate(payload) {
+//   const now = nowIso();
+//   setTodos((prev) => [
+//     {
+//       ...payload,
+//       id: Date.now(),
+//       created_at: now,
+//       updated_at: now,
+//       completed_at: payload.status === "completed" ? now : null,
+//     },
+//     ...prev,
+//   ]);
+  // }
+
+  // バックと繋ぐにあたって変更
+  async function handleCreate(payload) {
+    try {
+      console.log("送信するデータ:", payload);
+
+      const newTodo = await createTodo(payload);
+
+      console.log("保存できたデータ:", newTodo);
+
+      setTodos((prev) => [newTodo, ...prev]);
+    } catch (error) {
+      console.error("ToDo追加エラー:", error);
+      alert(`ToDoの追加に失敗しました。\n${error.message}`);
+    }
+  }
 
   // ✅ 編集（更新）
-  function handleUpdate(id, patch) {
-  const now = nowIso();
+  // function handleUpdate(id, patch) {
+  // const now = nowIso();
 
-  setTodos((prev) =>
-    prev.map((t) => {
-      if (t.id !== id) return t;
+  // setTodos((prev) =>
+  //   prev.map((t) => {
+  //     if (t.id !== id) return t;
 
-      const next = { ...t, ...patch, updated_at: now };
+  //     const next = { ...t, ...patch, updated_at: now };
 
       // 仕様：完了時は完了日時を記録
-      if (t.status !== "completed" && next.status === "completed") {
-        next.completed_at = now;
-      }
+      // if (t.status !== "completed" && next.status === "completed") {
+      //   next.completed_at = now;
+      // }
 
       // もし「完了から戻す」仕様にするなら、ここで null に戻すか決める
       // next.status !== "completed" の場合に completed_at を残す/消すは要件次第
-      if (next.status !== "completed") {
-        next.completed_at = null;
-      }
+      // if (next.status !== "completed") {
+      //   next.completed_at = null;
+      // }
 
-      return next;
-    })
-  );
-}
+  // return next;
 
-  // ✅ 削除（1件）
-  function handleDelete(id) {
-    setTodos((prev) => prev.filter((t) => t.id !== id));
+
+// バックとつなぐにあたって変更
+  async function handleUpdate(id, patch) {
+    try {
+      const updatedTodo = await updateTodo(id, patch);
+
+      setTodos((prev) =>
+        prev.map((t) => (t.id === id ? updatedTodo : t))
+      );
+    } catch (error) {
+      console.error("ToDo更新エラー:", error);
+      alert("ToDoの更新に失敗しました。");
+    }
   }
 
+
+  // ✅ 削除（1件）
+  // function handleDelete(id) {
+  //   setTodos((prev) => prev.filter((t) => t.id !== id));
+// }
+
+// バックと繋ぐにあたって変更
+ async function handleDelete(id) {
+    try {
+      await deleteTodo(id);
+      setTodos((prev) => prev.filter((t) => t.id !== id));
+    } catch (error) {
+      console.error("ToDo削除エラー:", error);
+      alert("ToDoの削除に失敗しました。");
+    }
+  }
+
+
   // ✅ 完了タスク一括削除
-function handleBulkDeleteDone() {
-  setTodos((prev) => prev.filter((t) => t.status !== "completed"));
-}
+// function handleBulkDeleteDone() {
+//   setTodos((prev) => prev.filter((t) => t.status !== "completed"));
+// }
+
+// バックと繋ぐにあたって変更
+// これは今の時点では画面側だけで削除しています
+  // 本当にDBからも消したいなら、あとでLaravel側に一括削除APIが必要です
+  function handleBulkDeleteDone() {
+    setTodos((prev) => prev.filter((t) => t.status !== "完了"));
+  }
+
+
 
   // ✅ カテゴリ別表示用にまとめる
   const groupedByCategoryList = useMemo(() => {
@@ -140,7 +216,7 @@ function handleBulkDeleteDone() {
             groupByCategory={groupByCategory}
             onToggleGroupByCategory={() => setGroupByCategory((v) => !v)}
             onBulkDeleteDone={handleBulkDeleteDone}
-            doneCount={todos.filter((t) => t.status === "completed").length}
+            doneCount={todos.filter((t) => t.status === "完了").length}
           />
 
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>

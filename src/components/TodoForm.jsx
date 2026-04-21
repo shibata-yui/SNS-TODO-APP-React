@@ -8,9 +8,9 @@ export function TodoForm({
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState(2);
+  const [priority, setPriority] = useState("中");
   const [dueDate, setDueDate] = useState("");
-  const [status, setStatus] = useState("pending");
+  const [status, setStatus] = useState("未着手");
   const [category, setCategory] = useState("仕事");
   const [error, setError] = useState("");
 
@@ -19,9 +19,9 @@ export function TodoForm({
     if (!initialValues) return;
     setTitle(initialValues.title ?? "");
     setDescription(initialValues.description ?? "");
-    setPriority(initialValues.priority ?? 2);
+    setPriority(initialValues.priority ?? "中");
     setDueDate(initialValues.due_date ?? "");
-    setStatus(initialValues.status ?? "todo");
+    setStatus(initialValues.status ?? "未着手");
     setCategory(initialValues.category ?? "仕事");
   }, [initialValues]);
 
@@ -37,10 +37,10 @@ export function TodoForm({
     const payload = {
       title: title.trim(),
       description: description.trim(),
-      priority: Number(priority),
+      priority: priority || null,
       due_date: dueDate || null,
       status,
-      category: category.trim() || null,
+      category: category || null,
     };
 
     onSubmit?.(payload);
@@ -49,10 +49,10 @@ export function TodoForm({
     if (!initialValues) {
       setTitle("");
       setDescription("");
-      setPriority(2);
+      setPriority("中");
       setDueDate("");
-      setStatus("todo");
-      setCategory("");
+      setStatus("未着手");
+      setCategory("仕事");
     }
   }
 
@@ -74,9 +74,9 @@ export function TodoForm({
         <label style={styles.label}>
           優先度
           <select style={styles.input} value={priority} onChange={(e) => setPriority(e.target.value)}>
-            <option value={1}>1（低）</option>
-            <option value={2}>2（中）</option>
-            <option value={3}>3（高）</option>
+            <option value="低">低</option>
+            <option value="中">中</option>
+            <option value="高">高</option>
           </select>
         </label>
 
@@ -88,9 +88,9 @@ export function TodoForm({
         <label style={styles.label}>
           ステータス
           <select style={styles.input} value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="pending">未着手</option>
-            <option value="in_progress">進行中</option>
-            <option value="completed">完了</option>
+            <option value="未着手">未着手</option>
+            <option value="進行中">進行中</option>
+            <option value="完了">完了</option>
           </select>
         </label>
 

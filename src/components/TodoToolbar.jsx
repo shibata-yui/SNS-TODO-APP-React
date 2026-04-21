@@ -37,9 +37,9 @@ export function TodoToolbar({
         {/* ✅ ステータス切替 */}
         <select style={styles.select} value={statusFilter} onChange={(e) => onChangeStatusFilter(e.target.value)}>
           <option value="all">全ステータス</option>
-          <option value="pending">未着手</option>
-          <option value="in_progress">進行中</option>
-          <option value="completed">完了</option>
+          <option value="未着手">未着手</option>
+          <option value="進行中">進行中</option>
+          <option value="完了">完了</option>
         </select>
 
         {/* ✅ カテゴリ切替 */}

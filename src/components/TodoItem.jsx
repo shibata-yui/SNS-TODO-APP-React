@@ -2,20 +2,42 @@ import { useState } from "react";
 import { TodoForm } from "./TodoForm";
 
 function badgeText(status) {
-  if (status === "completed") return "完了";
-  if (status === "in_progress") return "進行中";
+  if (status === "完了") return "完了";
+  if (status === "進行中") return "進行中";
   return "未着手"; // pending を想定
 }
+
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return "—";
+
+  const date = new Date(dateStr);
+
+  if (Number.isNaN(date.getTime())) {
+    return dateStr;
+  }
+
+  return date.toLocaleString("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+
+
 
 export function TodoItem({ todo, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
 
-  const isCompleted = todo.status === "completed";
+  const isCompleted = todo.status === "完了";
 
   function quickToggleCompleted() {
     // ✅ シンプル版：完了 ↔ 未着手（pending）
     // 設計書の順番通りに「未着手→進行中→完了」ボタンにしたい場合は下に別案あり
-    const next = isCompleted ? "pending" : "completed";
+    const next = isCompleted ? "未着手" : "完了";
     onUpdate?.(todo.id, { status: next });
   }
 
