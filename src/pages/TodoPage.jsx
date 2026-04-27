@@ -139,18 +139,36 @@ export function TodoPage() {
 
 // バックとつなぐにあたって変更
   async function handleUpdate(id, patch) {
-    try {
-      const updatedTodo = await updateTodo(id, patch);
+  try {
+    const targetTodo = todos.find((todo) => todo.id === id);
 
-      setTodos((prev) =>
-        prev.map((t) => (t.id === id ? updatedTodo : t))
-      );
-    } catch (error) {
-      console.error("ToDo更新エラー:", error);
-      alert("ToDoの更新に失敗しました。");
+    if (!targetTodo) {
+      alert("更新対象のToDoが見つかりません。");
+      return;
     }
-  }
 
+    const payload = {
+      title: targetTodo.title,
+      description: targetTodo.description,
+      priority: targetTodo.priority,
+      due_date: targetTodo.due_date,
+      status: targetTodo.status,
+      category: targetTodo.category,
+      ...patch,
+    };
+
+    console.log("更新で送信するデータ:", payload);
+
+    const updatedTodo = await updateTodo(id, payload);
+
+    setTodos((prev) =>
+      prev.map((todo) => (todo.id === id ? updatedTodo : todo))
+    );
+  } catch (error) {
+    console.error("ToDo更新エラー:", error);
+    alert(`ToDoの更新に失敗しました。\n${error.message}`);
+  }
+}
 
   // ✅ 削除（1件）
   // function handleDelete(id) {
