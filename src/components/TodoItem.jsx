@@ -2,42 +2,25 @@ import { useState } from "react";
 import { TodoForm } from "./TodoForm";
 
 function badgeText(status) {
-  if (status === "完了") return "完了";
-  if (status === "進行中") return "進行中";
-  return "未着手"; // pending を想定
+  if (status === "completed") return "完了";
+  if (status === "in_progress") return "進行中";
+  return "未着手";
 }
 
-
-function formatDateTime(dateStr) {
-  if (!dateStr) return "—";
-
-  const date = new Date(dateStr);
-
-  if (Number.isNaN(date.getTime())) {
-    return dateStr;
-  }
-
-  return date.toLocaleString("ja-JP", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function priorityText(priority) {
+  if (Number(priority) === 3) return "高";
+  if (Number(priority) === 2) return "中";
+  if (Number(priority) === 1) return "低";
+  return "—";
 }
-
-
-
 
 export function TodoItem({ todo, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
 
-  const isCompleted = todo.status === "完了";
+  const isCompleted = todo.status === "completed";
 
   function quickToggleCompleted() {
-    // ✅ シンプル版：完了 ↔ 未着手（pending）
-    // 設計書の順番通りに「未着手→進行中→完了」ボタンにしたい場合は下に別案あり
-    const next = isCompleted ? "未着手" : "完了";
+    const next = isCompleted ? "todo" : "completed";
     onUpdate?.(todo.id, { status: next });
   }
 
@@ -75,11 +58,13 @@ export function TodoItem({ todo, onUpdate, onDelete }) {
             {todo.title}
           </div>
 
-          {todo.description ? <div style={styles.desc}>{todo.description}</div> : null}
+          {todo.description ? (
+            <div style={styles.desc}>{todo.description}</div>
+          ) : null}
 
           <div style={styles.meta}>
             <span>カテゴリ：{todo.category || "—"}</span>
-            <span>優先度：{todo.priority ?? "—"}</span>
+            <span>優先度：{priorityText(todo.priority)}</span>
             <span>期限：{todo.due_date || "—"}</span>
           </div>
         </div>
@@ -107,7 +92,13 @@ export function TodoItem({ todo, onUpdate, onDelete }) {
       </div>
 
       {editing ? (
-        <div style={{ marginTop: 12, borderTop: "1px dashed #eef0f6", paddingTop: 12 }}>
+        <div
+          style={{
+            marginTop: 12,
+            borderTop: "1px dashed #eef0f6",
+            paddingTop: 12,
+          }}
+        >
           <TodoForm
             initialValues={todo}
             submitLabel="更新"
@@ -132,7 +123,14 @@ const styles = {
   },
   title: { fontWeight: 700, fontSize: 16 },
   desc: { marginTop: 6, opacity: 0.85 },
-  meta: { marginTop: 10, display: "flex", gap: 12, flexWrap: "wrap", fontSize: 12, opacity: 0.7 },
+  meta: {
+    marginTop: 10,
+    display: "flex",
+    gap: 12,
+    flexWrap: "wrap",
+    fontSize: 12,
+    opacity: 0.7,
+  },
   badge: {
     height: 26,
     padding: "0 10px",

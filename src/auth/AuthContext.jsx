@@ -5,7 +5,7 @@ import { login as loginApi, logout as logoutApi, fetchMe } from "../api/auth";
 
 const AuthContext = createContext(null);
 
-const STORAGE_KEY = "sns_todo_auth";1
+const STORAGE_KEY = "sns_todo_auth";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

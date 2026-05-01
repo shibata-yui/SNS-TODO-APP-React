@@ -18,16 +18,16 @@ export function TodoPage() {
   // const [todos, setTodos] = useState(sampleTodos);
   // バックと繋ぐにあたって変更
   const [todos, setTodos] = useState([]);
-  useEffect(() => {
-  fetchTodos().then(setTodos);
-}, []);
+//   useEffect(() => {
+//   fetchTodos().then(setTodos);
+// }, []);
 
   const [view, setView] = useState("list"); // list / calendar
   const [sortKey, setSortKey] = useState("due_date"); // due_date / priority / status
   const [query, setQuery] = useState("");
 
   // ✅ 表示切替：ステータス/カテゴリ（=要件）
-  const [statusFilter, setStatusFilter] = useState("all"); // all / todo / in_progress / done
+  const [statusFilter, setStatusFilter] = useState("all"); // all / todo / in_progress / completed
   const [categoryFilter, setCategoryFilter] = useState("all"); // all or category name
   const [groupByCategory, setGroupByCategory] = useState(false); // カテゴリ別表示
 
@@ -196,7 +196,7 @@ export function TodoPage() {
 // これは今の時点では画面側だけで削除しています
   // 本当にDBからも消したいなら、あとでLaravel側に一括削除APIが必要です
   function handleBulkDeleteDone() {
-    setTodos((prev) => prev.filter((t) => t.status !== "完了"));
+    setTodos((prev) => prev.filter((t) => t.status !== "completed"));
   }
 
 
@@ -234,7 +234,7 @@ export function TodoPage() {
             groupByCategory={groupByCategory}
             onToggleGroupByCategory={() => setGroupByCategory((v) => !v)}
             onBulkDeleteDone={handleBulkDeleteDone}
-            doneCount={todos.filter((t) => t.status === "完了").length}
+            doneCount={todos.filter((t) => t.status === "completed").length}
           />
 
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
