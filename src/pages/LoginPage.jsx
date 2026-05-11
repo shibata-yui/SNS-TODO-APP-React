@@ -16,7 +16,7 @@ export function LoginPage() {
   }
 
   if (isLoggedIn) {
-    return <Navigate to="/todos" replace />;
+    return <Navigate to="/posts" replace />;
   }
 
   async function handleSubmit(e) {
@@ -37,7 +37,7 @@ export function LoginPage() {
 
     try {
       await login(email, password);
-      navigate("/todos", { replace: true });
+      navigate("/posts", { replace: true });
     } catch (error) {
       console.error("ログインエラー:", error);
       setError(

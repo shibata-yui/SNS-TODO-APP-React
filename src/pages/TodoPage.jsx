@@ -18,9 +18,6 @@ export function TodoPage() {
   // const [todos, setTodos] = useState(sampleTodos);
   // バックと繋ぐにあたって変更
   const [todos, setTodos] = useState([]);
-//   useEffect(() => {
-//   fetchTodos().then(setTodos);
-// }, []);
 
   const [view, setView] = useState("list"); // list / calendar
   const [sortKey, setSortKey] = useState("due_date"); // due_date / priority / status
@@ -83,20 +80,6 @@ export function TodoPage() {
   }, [todos, sortKey, query, statusFilter, categoryFilter]);
 
   // ✅ 作成
-//   function handleCreate(payload) {
-//   const now = nowIso();
-//   setTodos((prev) => [
-//     {
-//       ...payload,
-//       id: Date.now(),
-//       created_at: now,
-//       updated_at: now,
-//       completed_at: payload.status === "completed" ? now : null,
-//     },
-//     ...prev,
-//   ]);
-  // }
-
   // バックと繋ぐにあたって変更
   async function handleCreate(payload) {
     try {
@@ -114,29 +97,6 @@ export function TodoPage() {
   }
 
   // ✅ 編集（更新）
-  // function handleUpdate(id, patch) {
-  // const now = nowIso();
-
-  // setTodos((prev) =>
-  //   prev.map((t) => {
-  //     if (t.id !== id) return t;
-
-  //     const next = { ...t, ...patch, updated_at: now };
-
-      // 仕様：完了時は完了日時を記録
-      // if (t.status !== "completed" && next.status === "completed") {
-      //   next.completed_at = now;
-      // }
-
-      // もし「完了から戻す」仕様にするなら、ここで null に戻すか決める
-      // next.status !== "completed" の場合に completed_at を残す/消すは要件次第
-      // if (next.status !== "completed") {
-      //   next.completed_at = null;
-      // }
-
-  // return next;
-
-
 // バックとつなぐにあたって変更
   async function handleUpdate(id, patch) {
   try {
@@ -171,10 +131,6 @@ export function TodoPage() {
 }
 
   // ✅ 削除（1件）
-  // function handleDelete(id) {
-  //   setTodos((prev) => prev.filter((t) => t.id !== id));
-// }
-
 // バックと繋ぐにあたって変更
  async function handleDelete(id) {
     try {
@@ -188,13 +144,9 @@ export function TodoPage() {
 
 
   // ✅ 完了タスク一括削除
-// function handleBulkDeleteDone() {
-//   setTodos((prev) => prev.filter((t) => t.status !== "completed"));
-// }
-
 // バックと繋ぐにあたって変更
 // これは今の時点では画面側だけで削除しています
-  // 本当にDBからも消したいなら、あとでLaravel側に一括削除APIが必要です
+  // 本当にDBからも消したいなら、あとでLaravel側に一括削除APIが必要！！
   function handleBulkDeleteDone() {
     setTodos((prev) => prev.filter((t) => t.status !== "completed"));
   }

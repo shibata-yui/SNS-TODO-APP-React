@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 import { TodoPage } from "./pages/TodoPage";
 import { LoginPage } from "./pages/LoginPage";
+import { PostPage } from "./pages/PostPage";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 
 function Header() {
@@ -14,6 +15,10 @@ function Header() {
         <nav style={styles.nav}>
           {isLoggedIn ? (
             <>
+              <Link to="/posts" style={styles.link}>
+                SNS投稿一覧
+              </Link>
+
               <Link to="/todos" style={styles.link}>
                 ToDo一覧
               </Link>
@@ -22,11 +27,7 @@ function Header() {
                 {user?.name ? `${user.name} さん` : "ログイン中"}
               </span>
 
-              <button
-                type="button"
-                style={styles.button}
-                onClick={logout}
-              >
+              <button type="button" style={styles.button} onClick={logout}>
                 ログアウト
               </button>
             </>
@@ -61,26 +62,35 @@ function AppRoutes() {
   return (
     <>
       <Header />
-      <div>
-        <Routes>
-          <Route
-            path="/"
-            element={<Navigate to={isLoggedIn ? "/todos" : "/login"} replace />}
-          />
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/todos"
-            element={
-              <ProtectedRoute>
-                <TodoPage />
-              </ProtectedRoute>
-            }
-          />
 
-          {/* <Route path="/todos" element={<TodoPage />} /> */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
+      <Routes>
+        <Route
+          path="/"
+          element={<Navigate to={isLoggedIn ? "/posts" : "/login"} replace />}
+        />
+
+        <Route path="/login" element={<LoginPage />} />
+
+        <Route
+          path="/posts"
+          element={
+            <ProtectedRoute>
+              <PostPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/todos"
+          element={
+            <ProtectedRoute>
+              <TodoPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </>
   );
 }
