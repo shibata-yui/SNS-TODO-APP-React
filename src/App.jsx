@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 import { TodoPage } from "./pages/TodoPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PostPage } from "./pages/PostPage";
+import { ProfilePage } from "./pages/ProfilePage";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 
 function Header() {
@@ -23,9 +24,9 @@ function Header() {
                 ToDo一覧
               </Link>
 
-              <span style={styles.userText}>
-                {user?.name ? `${user.name} さん` : "ログイン中"}
-              </span>
+              <Link to="/profile" style={{ ...styles.link, fontWeight: "bold", border: "none" }}>
+                {user?.name ? `${user.name} さんのプロフィール` : "プロフィール"}
+              </Link>
 
               <button type="button" style={styles.button} onClick={logout}>
                 ログアウト
@@ -85,6 +86,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <TodoPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
             </ProtectedRoute>
           }
         />
