@@ -4,7 +4,7 @@ import { fetchPosts } from "../api/posts";
 import { updateProfile } from "../api/profile";
 
 export function ProfilePage() {
-  const { user } = useAuth();
+  const { user, refreshMe } = useAuth();
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,18 +41,22 @@ export function ProfilePage() {
   }
 
   // --- 保存ボタンを押したときの仮処理 ---
-  async function handleSave(e) {
+async function handleSave(e) {
     e.preventDefault();
     try {
-      // 相方さんが作った「完璧な通信ツール」を使って送信！
+      // 相方さんが作ったツールでデータを送信
       await updateProfile({
         name: editName,
         bio: editBio,
       });
 
       alert("プロフィールを更新しました！");
-      // 画面を再読み込みして最新のデータにする
-      window.location.reload();
+
+      // 画面を強制リロードするのをやめて、最新情報を取得する処理に変更！
+      await refreshMe();
+
+      // 編集モードのスイッチをOFFにして通常の表示に戻す
+      setIsEditing(false);
 
     } catch (error) {
       console.error("更新エラー:", error);
