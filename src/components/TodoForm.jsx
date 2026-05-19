@@ -10,7 +10,7 @@ export function TodoForm({
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState(2);
   const [dueDate, setDueDate] = useState("");
-  const [status, setStatus] = useState("pending");
+  const [status, setStatus] = useState("todo");
   const [category, setCategory] = useState("仕事");
   const [error, setError] = useState("");
 
@@ -37,10 +37,10 @@ export function TodoForm({
     const payload = {
       title: title.trim(),
       description: description.trim(),
-      priority: Number(priority),
+      priority: priority ? Number(priority) : null,
       due_date: dueDate || null,
       status,
-      category: category.trim() || null,
+      category: category || null,
     };
 
     onSubmit?.(payload);
@@ -52,7 +52,7 @@ export function TodoForm({
       setPriority(2);
       setDueDate("");
       setStatus("todo");
-      setCategory("");
+      setCategory("仕事");
     }
   }
 
@@ -74,9 +74,9 @@ export function TodoForm({
         <label style={styles.label}>
           優先度
           <select style={styles.input} value={priority} onChange={(e) => setPriority(e.target.value)}>
-            <option value={1}>1（低）</option>
-            <option value={2}>2（中）</option>
-            <option value={3}>3（高）</option>
+            <option value={1}>低</option>
+            <option value={2}>中</option>
+            <option value={3}>高</option>
           </select>
         </label>
 
@@ -88,7 +88,7 @@ export function TodoForm({
         <label style={styles.label}>
           ステータス
           <select style={styles.input} value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="pending">未着手</option>
+            <option value="todo">未着手</option>
             <option value="in_progress">進行中</option>
             <option value="completed">完了</option>
           </select>
