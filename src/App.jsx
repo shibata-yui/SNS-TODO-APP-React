@@ -4,6 +4,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { PostPage } from "./pages/PostPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
+import { RegisterPage } from "./pages/RegisterPage";
 
 function Header() {
   const { isLoggedIn, logout, user } = useAuth();
@@ -70,7 +71,11 @@ function AppRoutes() {
           element={<Navigate to={isLoggedIn ? "/posts" : "/login"} replace />}
         />
 
+        {/* ↓ 元からあったログイン画面のルート ↓ */}
         <Route path="/login" element={<LoginPage />} />
+
+        {/* ↓ 新しく追加した新規登録画面のルート ↓ */}
+        <Route path="/register" element={<RegisterPage />} />
 
         <Route
           path="/posts"
