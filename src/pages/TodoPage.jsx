@@ -13,10 +13,12 @@ import { TodoCalendar } from "../components/TodoCalendar";
 // バックと繋ぐにあたって追記↓
 // import { useEffect } from "react";
 import { fetchTodos, createTodo, updateTodo, deleteTodo } from "../api/todos";
+import { useAuth } from "../auth/AuthContext";
 
 export function TodoPage() {
   // const [todos, setTodos] = useState(sampleTodos);
   // バックと繋ぐにあたって変更
+  const { user } = useAuth();
   const [todos, setTodos] = useState([]);
 
   const [view, setView] = useState("list"); // list / calendar
@@ -200,12 +202,22 @@ export function TodoPage() {
               {groupedByCategoryList.map(([cat, list]) => (
                 <section key={cat} style={styles.section}>
                   <div style={styles.sectionTitle}>{cat}</div>
-                  <TodoList todos={list} onUpdate={handleUpdate} onDelete={handleDelete} />
+                  <TodoList
+                    todos={list}
+                    onUpdate={handleUpdate}
+                    onDelete={handleDelete}
+                    currentUserId={user?.id}
+                  />
                 </section>
               ))}
             </div>
           ) : (
-            <TodoList todos={filtered} onUpdate={handleUpdate} onDelete={handleDelete} />
+            <TodoList
+              todos={filtered}
+              onUpdate={handleUpdate}
+              onDelete={handleDelete}
+              currentUserId={user?.id}
+              />
           )}
         </div>
 
