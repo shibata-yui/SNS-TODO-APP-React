@@ -14,10 +14,17 @@ function priorityText(priority) {
   return "—";
 }
 
-export function TodoItem({ todo, onUpdate, onDelete }) {
+export function TodoItem({ todo, onUpdate, onDelete, currentUserId }) {
   const [editing, setEditing] = useState(false);
 
+  console.log("ログインユーザーID:", currentUserId);
+  console.log("ToDoのuser_id:", todo.user_id);
+  console.log("ToDo全体:", todo);
+
   const isCompleted = todo.status === "completed";
+
+  // ログインユーザー本人のToDoかどうかを判定
+  const isOwnTodo = Number(currentUserId) === Number(todo.user_id);
 
   function quickToggleCompleted() {
     const next = isCompleted ? "todo" : "completed";
@@ -36,13 +43,15 @@ export function TodoItem({ todo, onUpdate, onDelete }) {
       >
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <button
-              type="button"
-              onClick={quickToggleCompleted}
-              style={styles.smallBtn}
-            >
-              {isCompleted ? "未完了に戻す" : "完了にする"}
-            </button>
+            {isOwnTodo && (
+              <button
+                type="button"
+                onClick={quickToggleCompleted}
+                style={styles.smallBtn}
+              >
+                {isCompleted ? "未完了に戻す" : "完了にする"}
+              </button>
+            )}
 
             <span style={styles.badge}>{badgeText(todo.status)}</span>
           </div>
@@ -69,29 +78,31 @@ export function TodoItem({ todo, onUpdate, onDelete }) {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            type="button"
-            style={styles.smallBtn}
-            onClick={() => setEditing((v) => !v)}
-          >
-            {editing ? "閉じる" : "編集"}
-          </button>
+        {isOwnTodo && (
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              type="button"
+              style={styles.smallBtn}
+              onClick={() => setEditing((v) => !v)}
+            >
+              {editing ? "閉じる" : "編集"}
+            </button>
 
-          <button
-            type="button"
-            style={styles.dangerBtn}
-            onClick={() => {
-              const ok = confirm("このタスクを削除しますか？");
-              if (ok) onDelete?.(todo.id);
-            }}
-          >
-            削除
-          </button>
-        </div>
+            <button
+              type="button"
+              style={styles.dangerBtn}
+              onClick={() => {
+                const ok = confirm("このタスクを削除しますか？");
+                if (ok) onDelete?.(todo.id);
+              }}
+            >
+              削除
+            </button>
+          </div>
+        )}
       </div>
 
-      {editing ? (
+      {isOwnTodo && editing ? (
         <div
           style={{
             marginTop: 12,
