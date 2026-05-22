@@ -3,9 +3,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: light;/* ダークモード判定をオフにしてライトモード固定 */
+  color: #333333;/* 文字色をダークグレーに固定 */
+  background-color: #f6f7fb;/* 背景全体を薄いグレーに固定 */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

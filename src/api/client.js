@@ -1,11 +1,8 @@
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+export const API_BASE_URL = "http://localhost:8000/api";
 
 function getAuthToken() {
   const saved = localStorage.getItem("sns_todo_auth");
-
   if (!saved) return null;
-
   try {
     const parsed = JSON.parse(saved);
     return parsed.token;
@@ -16,7 +13,6 @@ function getAuthToken() {
 
 export async function apiFetch(path, options = {}) {
   const token = getAuthToken();
-
   const headers = {
     Accept: "application/json",
     "Content-Type": "application/json",
@@ -38,10 +34,8 @@ export async function apiFetch(path, options = {}) {
   }
 
   const contentType = res.headers.get("content-type") || "";
-
   if (contentType.includes("application/json")) {
     return res.json();
   }
-
   return null;
 }
