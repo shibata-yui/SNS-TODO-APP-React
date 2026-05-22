@@ -32,11 +32,22 @@ export function TodoPage() {
 
 
 // 最初に一覧を取得(※バックと繋ぐにあたって追記)
-  useEffect(() => {
+useEffect(() => {
     async function loadTodos() {
       try {
         const data = await fetchTodos();
-        setTodos(data);
+
+        // 💡 ここから石橋を叩く処理（安全装置）に変更
+        if (Array.isArray(data)) {
+          // ちゃんとリスト（配列）で返ってきたらセットする
+          setTodos(data);
+        } else {
+          // リストじゃない謎のデータ（エラー文など）が返ってきたら、画面を落とさず空っぽにする
+          console.error("Laravelから予期せぬデータが返ってきました:", data);
+          setTodos([]);
+        }
+        // 💡 ここまで
+
       } catch (error) {
         console.error("ToDo一覧取得エラー:", error);
         alert("ToDo一覧の取得に失敗しました。Laravel側が起動しているか確認してください。");
@@ -45,7 +56,6 @@ export function TodoPage() {
 
     loadTodos();
   }, []);
-
 
 
   const categories = useMemo(() => {
