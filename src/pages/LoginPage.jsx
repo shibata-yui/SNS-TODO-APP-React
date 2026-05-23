@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
 export function LoginPage() {
@@ -86,6 +86,13 @@ export function LoginPage() {
             {submitting ? "ログイン中..." : "ログイン"}
           </button>
         </form>
+
+        <div style={styles.registerArea}>
+          <span>アカウントをお持ちでない方はこちら</span>
+          <Link to="/register" style={styles.registerLink}>
+            新規登録
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -116,7 +123,7 @@ const styles = {
   desc: {
     margin: 0,
     color: "#555",
-    fontSize: 14,
+    fontSize: 16,
   },
   form: {
     display: "grid",
@@ -125,7 +132,7 @@ const styles = {
   label: {
     display: "grid",
     gap: 6,
-    fontSize: 14,
+    fontSize: 16,
   },
   input: {
     padding: "10px 12px",
@@ -141,13 +148,25 @@ const styles = {
     color: "white",
     cursor: "pointer",
   },
+  registerArea: {
+    marginTop: 4,
+    textAlign: "center",
+    display: "grid",
+    gap: 8,
+    fontSize: 16,
+  },
+  registerLink: {
+    color: "#0066cc",
+    textDecoration: "underline",
+    fontWeight: 700,
+  },
   error: {
     padding: 10,
     borderRadius: 10,
     background: "#fff3f3",
     border: "1px solid #ffd3d3",
     color: "#b00020",
-    fontSize: 14,
+    fontSize: 16,
   },
   center: {
     minHeight: "calc(100vh - 80px)",
