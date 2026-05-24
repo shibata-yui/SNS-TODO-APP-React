@@ -242,7 +242,7 @@ useEffect(() => {
 
 const styles = {
   page: { minHeight: "100vh", background: "#f6f7fb", padding: 8 },
-  container: { maxWidth: 1200, margin: "0 auto", display: "grid", gap: 16 ,width: "100%"},
+  container: { maxWidth: 980, margin: "0 auto", display: "grid", gap: 16 ,width: "100%"},
   title: { margin: "8px 0 0", fontSize: 28 },
   h2: { margin: "0 0 12px", fontSize: 18 },
   card: {
