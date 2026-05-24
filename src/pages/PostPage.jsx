@@ -284,7 +284,7 @@ const styles = {
     padding: 16,
   },
   container: {
-    maxWidth: 900,
+    maxWidth: 980,
     margin: "0 auto",
     display: "grid",
     gap: 16,
