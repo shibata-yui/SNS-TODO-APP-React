@@ -4,6 +4,8 @@ import {
   createPost,
   updatePost,
   deletePost,
+  toggleLike,
+  toggleBookmark,
 } from "../api/posts";
 import { useAuth } from "../auth/AuthContext";
 
@@ -98,6 +100,53 @@ export function PostPage() {
     }
   }
 
+
+
+  async function handleToggleLike(postId) {
+  try {
+    const result = await toggleLike(postId);
+
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              is_liked: result.liked,
+              likes_count: result.liked
+                ? Number(post.likes_count || 0) + 1
+                : Math.max(Number(post.likes_count || 0) - 1, 0),
+            }
+          : post
+      )
+    );
+  } catch (error) {
+    console.error("いいね切り替えエラー:", error);
+    alert("いいねの切り替えに失敗しました。");
+  }
+}
+
+async function handleToggleBookmark(postId) {
+  try {
+    const result = await toggleBookmark(postId);
+
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              is_bookmarked: result.bookmarked,
+            }
+          : post
+      )
+    );
+  } catch (error) {
+    console.error("ブックマーク切り替えエラー:", error);
+    alert("ブックマークの切り替えに失敗しました。");
+  }
+}
+
+
+
   return (
     <div style={styles.page}>
       <div style={styles.container}>
@@ -167,7 +216,30 @@ export function PostPage() {
                       </>
                     ) : (
                       <>
-                        <p style={styles.content}>{post.contents}</p>
+                          <p style={styles.content}>{post.contents}</p>
+                          <div style={styles.reactionArea}>
+                          <button
+                            type="button"
+                            style={post.is_liked ? styles.activeReactionButton : styles.reactionButton}
+                            onClick={() => handleToggleLike(post.id)}
+                          >
+                            {post.is_liked ? "❤️ いいね済み" : "🤍 いいね"} {post.likes_count ?? 0}
+                          </button>
+
+                          <button
+                            type="button"
+                            style={
+                            post.is_bookmarked
+                            ? styles.activeReactionButton
+                            : styles.reactionButton
+                            }
+                            onClick={() => handleToggleBookmark(post.id)}
+                          >
+                          {post.is_bookmarked ? "🔖 保存済み" : "📑 ブックマーク"}
+                          </button>
+                    </div>
+
+
 
                         <div style={styles.date}>
                           投稿日時：{new Date(post.created_at).toLocaleString()}
@@ -307,4 +379,29 @@ const styles = {
     padding: 10,
     borderRadius: 10,
   },
+
+  reactionArea: {
+  display: "flex",
+  gap: 8,
+  marginTop: 10,
+  flexWrap: "wrap",
+},
+reactionButton: {
+  padding: "6px 10px",
+  borderRadius: 999,
+  border: "1px solid #ddd",
+  background: "white",
+  cursor: "pointer",
+},
+activeReactionButton: {
+  padding: "6px 10px",
+  borderRadius: 999,
+  border: "1px solid #222",
+  background: "#222",
+  color: "white",
+  cursor: "pointer",
+},
+
+
+
 };

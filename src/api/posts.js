@@ -23,3 +23,16 @@ export function deletePost(id) {
     method: "DELETE",
   });
 }
+
+
+export function toggleLike(postId) {
+  return apiFetch(`/posts/${postId}/like`, {
+    method: "POST",
+  });
+}
+
+export function toggleBookmark(postId) {
+  return apiFetch(`/posts/${postId}/bookmark`, {
+    method: "POST",
+  });
+}
