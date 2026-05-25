@@ -5,6 +5,7 @@ import { PostPage } from "./pages/PostPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { RegisterPage } from "./pages/RegisterPage";
+import UserSearchPage from './pages/UserSearchPage';
 
 function Header() {
   const { isLoggedIn, logout, user } = useAuth();
@@ -17,6 +18,34 @@ function Header() {
         <nav style={styles.nav}>
           {isLoggedIn ? (
             <>
+              <Link
+                to="/users"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: '#333',
+                  textDecoration: 'none',
+                  padding: '8px'
+                }}
+                title="ユーザー検索"
+              >
+                {/* 虫眼鏡のSVGアイコン */}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </Link>
+
               <Link to="/posts" style={styles.link}>
                 SNS投稿一覧
               </Link>
@@ -85,6 +114,12 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/users"
+          element={
+            <UserSearchPage />
+          } />
 
         <Route
           path="/todos"
