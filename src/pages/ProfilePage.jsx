@@ -2,20 +2,31 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { fetchPosts } from "../api/posts";
 import { updateProfile } from "../api/profile";
+import { apiFetch } from "../api/client"; // 💡 追加：プロフィールの情報をもらってくるための通信ツール
 
 export function ProfilePage() {
   const { user, refreshMe } = useAuth();
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // --- 編集機能のための「状態管理（スイッチとデータ）」 ---
+  // 💡 追加：フォロー数・フォロワー数を入れる箱（最初は0）
+  const [profileStats, setProfileStats] = useState({ followings_count: 0, followers_count: 0 });
+
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
 
   useEffect(() => {
-    async function loadMyPosts() {
+    async function loadProfileData() {
       try {
+        // 💡 1. まずプロフィールの情報（カウント数）を取得
+        const profileData = await apiFetch('/profile');
+        setProfileStats({
+          followings_count: profileData.followings_count || 0,
+          followers_count: profileData.followers_count || 0,
+        });
+
+        // 2. その後、自分の投稿一覧を取得
         const allPosts = await fetchPosts();
         const filtered = allPosts.filter(post => post.user_id === user?.id);
         setMyPosts(filtered);
@@ -25,39 +36,33 @@ export function ProfilePage() {
         setLoading(false);
       }
     }
-    loadMyPosts();
+
+    // ユーザー情報がちゃんとある時だけ実行する（石橋を叩く）
+    if (user?.id) {
+        loadProfileData();
+    }
   }, [user]);
 
-  // --- 編集モードを開くときの処理 ---
   function startEdit() {
     setEditName(user?.name || "");
     setEditBio(user?.bio || "");
-    setIsEditing(true); // スイッチをON
+    setIsEditing(true);
   }
 
-  // --- 編集モードをキャンセルするときの処理 ---
   function cancelEdit() {
-    setIsEditing(false); // スイッチをOFF
+    setIsEditing(false);
   }
 
-  // --- 保存ボタンを押したときの仮処理 ---
-async function handleSave(e) {
+  async function handleSave(e) {
     e.preventDefault();
     try {
-      // 相方さんが作ったツールでデータを送信
       await updateProfile({
         name: editName,
         bio: editBio,
       });
-
       alert("プロフィールを更新しました！");
-
-      // 画面を強制リロードするのをやめて、最新情報を取得する処理に変更！
       await refreshMe();
-
-      // 編集モードのスイッチをOFFにして通常の表示に戻す
       setIsEditing(false);
-
     } catch (error) {
       console.error("更新エラー:", error);
       alert("保存に失敗しました。");
@@ -68,13 +73,11 @@ async function handleSave(e) {
     <div style={styles.page}>
       <div style={styles.container}>
 
-        {/* プロフィール上部エリア */}
         <div style={styles.profileCard}>
           <div style={styles.iconPlaceholder}>
             <span style={{ fontSize: 40 }}>👤</span>
           </div>
 
-          {/* ここから：isEditing が true なら入力枠を、false なら今まで通りの文字を表示 */}
           {isEditing ? (
             <form onSubmit={handleSave} style={styles.editForm}>
               <input
@@ -103,8 +106,9 @@ async function handleSave(e) {
               </p>
 
               <div style={styles.stats}>
-                <span><strong style={{fontSize: 18}}>0</strong> フォロー</span>
-                <span><strong style={{fontSize: 18}}>0</strong> フォロワー</span>
+                {/* 💡 修正：状態管理している profileStats から数字を表示 */}
+                <span><strong style={{fontSize: 18}}>{profileStats.followings_count}</strong> フォロー</span>
+                <span><strong style={{fontSize: 18}}>{profileStats.followers_count}</strong> フォロワー</span>
               </div>
 
               <button onClick={startEdit} style={styles.editButton}>
@@ -112,10 +116,8 @@ async function handleSave(e) {
               </button>
             </>
           )}
-          {/* ここまで */}
         </div>
 
-        {/* 自分の投稿一覧エリア（変更なし） */}
         <div style={styles.postCard}>
           <h2 style={styles.h2}>自分の投稿一覧</h2>
 
@@ -142,7 +144,6 @@ async function handleSave(e) {
   );
 }
 
-// デザイン（スタイル）に追加分を記述
 const styles = {
   page: { minHeight: "100vh", background: "#f6f7fb", padding: "24px 16px" },
   container: { maxWidth: 600, margin: "0 auto", display: "grid", gap: 20, width: "100%" },
@@ -153,7 +154,6 @@ const styles = {
   stats: { display: "flex", justifyContent: "center", gap: 32, marginBottom: 24, color: "#555" },
   editButton: { padding: "10px 24px", borderRadius: 20, border: "1px solid #ccc", background: "white", cursor: "pointer", fontWeight: "bold", fontSize: 14 },
 
-  /* 追加したスタイル */
   editForm: { display: "flex", flexDirection: "column", gap: 16, alignItems: "center", marginBottom: 16 },
   input: { width: "80%", padding: "10px", borderRadius: 8, border: "1px solid #ddd", fontSize: 16, textAlign: "center" },
   editBioInput: { width: "80%", minHeight: 100, padding: "12px", borderRadius: 8, border: "1px solid #ddd", fontSize: 15, resize: "vertical" },
