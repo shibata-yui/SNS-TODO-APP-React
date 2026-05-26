@@ -25,7 +25,8 @@ export function PostPage() {
   async function loadPosts() {
     try {
       const data = await fetchPosts();
-      setPosts(data);
+      // 💡 安全装置：データが配列でなければ空配列を入れる
+      setPosts(Array.isArray(data) ? data : []);
       setError("");
     } catch (error) {
       console.error("投稿一覧取得エラー:", error);
@@ -100,52 +101,48 @@ export function PostPage() {
     }
   }
 
-
-
   async function handleToggleLike(postId) {
-  try {
-    const result = await toggleLike(postId);
+    try {
+      const result = await toggleLike(postId);
 
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              is_liked: result.liked,
-              likes_count: result.liked
-                ? Number(post.likes_count || 0) + 1
-                : Math.max(Number(post.likes_count || 0) - 1, 0),
-            }
-          : post
-      )
-    );
-  } catch (error) {
-    console.error("いいね切り替えエラー:", error);
-    alert("いいねの切り替えに失敗しました。");
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                is_liked: result?.liked ?? false,
+                likes_count: result?.liked
+                  ? Number(post.likes_count || 0) + 1
+                  : Math.max(Number(post.likes_count || 0) - 1, 0),
+              }
+            : post
+        )
+      );
+    } catch (error) {
+      console.error("いいね切り替えエラー:", error);
+      alert("いいねの切り替えに失敗しました。");
+    }
   }
-}
 
-async function handleToggleBookmark(postId) {
-  try {
-    const result = await toggleBookmark(postId);
+  async function handleToggleBookmark(postId) {
+    try {
+      const result = await toggleBookmark(postId);
 
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              is_bookmarked: result.bookmarked,
-            }
-          : post
-      )
-    );
-  } catch (error) {
-    console.error("ブックマーク切り替えエラー:", error);
-    alert("ブックマークの切り替えに失敗しました。");
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                is_bookmarked: result?.bookmarked ?? false,
+              }
+            : post
+        )
+      );
+    } catch (error) {
+      console.error("ブックマーク切り替えエラー:", error);
+      alert("ブックマークの切り替えに失敗しました。");
+    }
   }
-}
-
-
 
   return (
     <div style={styles.page}>
@@ -179,6 +176,9 @@ async function handleToggleBookmark(postId) {
           ) : (
             <div style={styles.postList}>
               {posts.map((post) => {
+                // 💡 安全装置：postがnullやundefinedならスキップ
+                if (!post) return null;
+
                 const isOwnPost = user?.id === post.user_id;
                 const isEditing = editingPostId === post.id;
 
@@ -216,8 +216,9 @@ async function handleToggleBookmark(postId) {
                       </>
                     ) : (
                       <>
-                          <p style={styles.content}>{post.contents}</p>
-                          <div style={styles.reactionArea}>
+                        <p style={styles.content}>{post.contents}</p>
+
+                        <div style={styles.reactionArea}>
                           <button
                             type="button"
                             style={post.is_liked ? styles.activeReactionButton : styles.reactionButton}
@@ -228,21 +229,15 @@ async function handleToggleBookmark(postId) {
 
                           <button
                             type="button"
-                            style={
-                            post.is_bookmarked
-                            ? styles.activeReactionButton
-                            : styles.reactionButton
-                            }
+                            style={post.is_bookmarked ? styles.activeReactionButton : styles.reactionButton}
                             onClick={() => handleToggleBookmark(post.id)}
                           >
-                          {post.is_bookmarked ? "🔖 保存済み" : "📑 ブックマーク"}
+                            {post.is_bookmarked ? "🔖 保存済み" : "📑 ブックマーク"}
                           </button>
-                    </div>
-
-
+                        </div>
 
                         <div style={styles.date}>
-                          投稿日時：{new Date(post.created_at).toLocaleString()}
+                          投稿日時：{post.created_at ? new Date(post.created_at).toLocaleString() : "不明"}
                         </div>
 
                         {isOwnPost && (
@@ -278,130 +273,24 @@ async function handleToggleBookmark(postId) {
 }
 
 const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "#f6f7fb",
-    padding: 16,
-  },
-  container: {
-    maxWidth: 980,
-    margin: "0 auto",
-    display: "grid",
-    gap: 16,
-    width: "100%",
-  },
-  title: {
-    margin: "8px 0 0",
-    fontSize: 28,
-  },
-  h2: {
-    margin: "0 0 12px",
-    fontSize: 18,
-  },
-  card: {
-    background: "white",
-    borderRadius: 12,
-    padding: 16,
-    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-  },
-  textarea: {
-    width: "100%",
-    minHeight: 100,
-    padding: 12,
-    borderRadius: 10,
-    border: "1px solid #ddd",
-    resize: "vertical",
-    boxSizing: "border-box",
-  },
-  button: {
-    marginTop: 10,
-    padding: "10px 14px",
-    borderRadius: 10,
-    border: "1px solid #222",
-    background: "#222",
-    color: "white",
-    cursor: "pointer",
-  },
-  cancelButton: {
-    marginTop: 10,
-    padding: "10px 14px",
-    borderRadius: 10,
-    border: "1px solid #ccc",
-    background: "white",
-    color: "#333",
-    cursor: "pointer",
-  },
-  smallButton: {
-    padding: "6px 10px",
-    borderRadius: 8,
-    border: "1px solid #ccc",
-    background: "white",
-    cursor: "pointer",
-  },
-  deleteButton: {
-    padding: "6px 10px",
-    borderRadius: 8,
-    border: "1px solid #ffb3b3",
-    background: "#fff3f3",
-    color: "#b00020",
-    cursor: "pointer",
-  },
-  postList: {
-    display: "grid",
-    gap: 12,
-  },
-  postItem: {
-    border: "1px solid #eef0f6",
-    borderRadius: 12,
-    padding: 12,
-    background: "#fff",
-  },
-  meta: {
-    fontWeight: 700,
-    marginBottom: 8,
-  },
-  content: {
-    margin: "8px 0",
-    whiteSpace: "pre-wrap",
-  },
-  date: {
-    fontSize: 12,
-    opacity: 0.7,
-  },
-  actionArea: {
-    display: "flex",
-    gap: 8,
-    marginTop: 10,
-  },
-  error: {
-    color: "#b00020",
-    background: "#fff3f3",
-    padding: 10,
-    borderRadius: 10,
-  },
-
-  reactionArea: {
-  display: "flex",
-  gap: 8,
-  marginTop: 10,
-  flexWrap: "wrap",
-},
-reactionButton: {
-  padding: "6px 10px",
-  borderRadius: 999,
-  border: "1px solid #ddd",
-  background: "white",
-  cursor: "pointer",
-},
-activeReactionButton: {
-  padding: "6px 10px",
-  borderRadius: 999,
-  border: "1px solid #222",
-  background: "#222",
-  color: "white",
-  cursor: "pointer",
-},
-
-
-
+  page: { minHeight: "100vh", background: "#f6f7fb", padding: 16 },
+  container: { maxWidth: 980, margin: "0 auto", display: "grid", gap: 16, width: "100%" },
+  title: { margin: "8px 0 0", fontSize: 28 },
+  h2: { margin: "0 0 12px", fontSize: 18 },
+  card: { background: "white", borderRadius: 12, padding: 16, boxShadow: "0 6px 18px rgba(0,0,0,0.06)" },
+  textarea: { width: "100%", minHeight: 100, padding: 12, borderRadius: 10, border: "1px solid #ddd", resize: "vertical", boxSizing: "border-box" },
+  button: { marginTop: 10, padding: "10px 14px", borderRadius: 10, border: "1px solid #222", background: "#222", color: "white", cursor: "pointer" },
+  cancelButton: { marginTop: 10, padding: "10px 14px", borderRadius: 10, border: "1px solid #ccc", background: "white", color: "#333", cursor: "pointer" },
+  smallButton: { padding: "6px 10px", borderRadius: 8, border: "1px solid #ccc", background: "white", cursor: "pointer" },
+  deleteButton: { padding: "6px 10px", borderRadius: 8, border: "1px solid #ffb3b3", background: "#fff3f3", color: "#b00020", cursor: "pointer" },
+  postList: { display: "grid", gap: 12 },
+  postItem: { border: "1px solid #eef0f6", borderRadius: 12, padding: 12, background: "#fff" },
+  meta: { fontWeight: 700, marginBottom: 8 },
+  content: { margin: "8px 0", whiteSpace: "pre-wrap" },
+  date: { fontSize: 12, opacity: 0.7, marginTop: 8 },
+  actionArea: { display: "flex", gap: 8, marginTop: 10 },
+  error: { color: "#b00020", background: "#fff3f3", padding: 10, borderRadius: 10 },
+  reactionArea: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" },
+  reactionButton: { padding: "6px 10px", borderRadius: 999, border: "1px solid #ddd", background: "white", cursor: "pointer" },
+  activeReactionButton: { padding: "6px 10px", borderRadius: 999, border: "1px solid #222", background: "#222", color: "white", cursor: "pointer" },
 };
