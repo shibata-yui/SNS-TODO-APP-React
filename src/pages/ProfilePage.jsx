@@ -3,12 +3,12 @@ import { useAuth } from "../auth/AuthContext";
 import { fetchPosts } from "../api/posts";
 import { updateProfile } from "../api/profile";
 import { apiFetch } from "../api/client";
-import { fetchLikedPosts } from "../api/likes"; // 💡 追加：いいね一覧を取得するツール
+import { fetchLikedPosts } from "../api/likes";
 
 export function ProfilePage() {
   const { user, refreshMe } = useAuth();
   const [myPosts, setMyPosts] = useState([]);
-  const [likedPosts, setLikedPosts] = useState([]); // 💡 追加：いいねした投稿を入れる箱
+  const [likedPosts, setLikedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [profileStats, setProfileStats] = useState({ followings_count: 0, followers_count: 0 });
 
@@ -16,7 +16,6 @@ export function ProfilePage() {
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
 
-  // 💡 追加：現在「自分の投稿」と「いいね」のどっちのタブを開いているかを記憶するスイッチ
   const [activeTab, setActiveTab] = useState("myPosts");
 
   useEffect(() => {
@@ -28,12 +27,10 @@ export function ProfilePage() {
           followers_count: profileData.followers_count || 0,
         });
 
-        // 自分の投稿を取得
         const allPosts = await fetchPosts();
         const filtered = allPosts.filter(post => post.user_id === user?.id);
         setMyPosts(filtered);
 
-        // 💡 追加：自分がいいねした投稿も取得しておく
         const likedData = await fetchLikedPosts();
         setLikedPosts(likedData);
 
@@ -75,14 +72,12 @@ export function ProfilePage() {
     }
   }
 
-  // 💡 追加：今表示すべき投稿リストを、タブの状態によって切り替えるロジック
   const displayedPosts = activeTab === "myPosts" ? myPosts : likedPosts;
 
   return (
     <div style={styles.page}>
       <div style={styles.container}>
 
-        {/* プロフィール上部エリア */}
         <div style={styles.profileCard}>
           <div style={styles.iconPlaceholder}>
             <span style={{ fontSize: 40 }}>👤</span>
@@ -110,10 +105,8 @@ export function ProfilePage() {
           )}
         </div>
 
-        {/* 投稿一覧エリア */}
         <div style={styles.postCard}>
 
-          {/* 💡 追加：タブ切り替えボタン */}
           <div style={styles.tabContainer}>
             <button
               style={activeTab === "myPosts" ? styles.activeTab : styles.inactiveTab}
@@ -137,10 +130,8 @@ export function ProfilePage() {
             </p>
           ) : (
             <div style={styles.postList}>
-              {/* 💡 修正：選ばれているタブのデータ（displayedPosts）を回して表示する */}
               {displayedPosts.map(post => (
                 <div key={post.id} style={styles.postItem}>
-                  {/* いいねタブの時は、誰の投稿か分かるように名前を出す */}
                   {activeTab === "likedPosts" && post.user && (
                     <p style={styles.postAuthor}>👤 {post.user.name}さんの投稿</p>
                   )}
@@ -159,7 +150,6 @@ export function ProfilePage() {
   );
 }
 
-// デザイン（スタイル）
 const styles = {
   page: { minHeight: "100vh", background: "#f6f7fb", padding: "24px 16px" },
   container: { maxWidth: 600, margin: "0 auto", display: "grid", gap: 20, width: "100%" },
@@ -180,8 +170,6 @@ const styles = {
   postItem: { border: "1px solid #eef0f6", borderRadius: 12, padding: 16, background: "#fff" },
   content: { margin: "0 0 12px", whiteSpace: "pre-wrap", lineHeight: 1.5 },
   date: { fontSize: 12, color: "#888" },
-
-  /* 💡 追加：タブ用のデザインと名前表示用のデザイン */
   tabContainer: { display: "flex", borderBottom: "1px solid #eef0f6", marginBottom: "16px" },
   activeTab: { flex: 1, padding: "16px", background: "none", border: "none", borderBottom: "3px solid #222", cursor: "pointer", fontWeight: "bold", fontSize: "16px", color: "#222" },
   inactiveTab: { flex: 1, padding: "16px", background: "none", border: "none", borderBottom: "3px solid transparent", cursor: "pointer", fontWeight: "normal", fontSize: "16px", color: "#888" },

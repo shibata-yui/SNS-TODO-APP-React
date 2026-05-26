@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../api/client';
+import { useAuth } from '../auth/AuthContext'; // 💡 追加：自分のログイン情報を取得するツール
+import { toggleFollow } from '../api/follows'; // 💡 追加：さっき作ったフォロー用の通信ツール
 
 const UserSearchPage = () => {
+    const { user: currentUser } = useAuth(); // 💡 現在ログインしている「自分」の情報を取得
     const [users, setUsers] = useState([]);
     const [keyword, setKeyword] = useState('');
     const [searchedKeyword, setSearchedKeyword] = useState('');
     const [error, setError] = useState('');
-
-    // 💡 追加：データ取得中かどうかを判定する箱（最初は「取得中」にする）
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -15,7 +16,7 @@ const UserSearchPage = () => {
     }, []);
 
     const fetchUsers = async (searchWord = '') => {
-        setIsLoading(true); // 通信スタート時に「取得中」をオンにする
+        setIsLoading(true);
         try {
             const url = searchWord ? `/users?keyword=${searchWord}` : '/users';
             const data = await apiFetch(url);
@@ -24,7 +25,6 @@ const UserSearchPage = () => {
         } catch (error) {
             console.error('ユーザー情報の取得に失敗しました', error);
         } finally {
-            // 通信が終わったら（成功でも失敗でも）「取得中」をオフにする
             setIsLoading(false);
         }
     };
@@ -39,6 +39,26 @@ const UserSearchPage = () => {
 
         setError('');
         fetchUsers(keyword);
+    };
+
+    // 💡 追加：フォローボタンが押された時の処理
+    const handleToggleFollow = async (targetUserId) => {
+        try {
+            // 裏側のAPIを叩く
+            const result = await toggleFollow(targetUserId);
+
+            // 通信に成功したら、画面のリストを書き換えてボタンの見た目（フォロー中か否か）を更新する
+            setUsers((prevUsers) =>
+                prevUsers.map((u) =>
+                    u.id === targetUserId
+                        ? { ...u, is_following: result.is_following }
+                        : u
+                )
+            );
+        } catch (error) {
+            console.error('フォロー操作エラー:', error);
+            alert('フォローの操作に失敗しました。');
+        }
     };
 
     return (
@@ -71,7 +91,6 @@ const UserSearchPage = () => {
                 </button>
             </form>
 
-            {/* 💡 修正：背景色と余白（padding）を削除してスッキリとした赤文字のみに */}
             {error && (
                 <p style={{ color: '#b00020', fontWeight: 'bold', marginBottom: '10px' }}>
                     {error}
@@ -84,33 +103,55 @@ const UserSearchPage = () => {
                 </p>
             )}
 
-            {/* 💡 追加：データ取得中は「読み込み中...」と表示してチラつきを防ぐ */}
             {isLoading ? (
                 <p style={{ color: '#666' }}>読み込み中...</p>
             ) : (
                 <ul style={{ listStyleType: 'none', padding: 0 }}>
-                    {users.map((user) => (
-                        <li
-                            key={user.id}
-                            style={{
-                                padding: '15px',
-                                borderBottom: '1px solid #eee',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                backgroundColor: '#fff',
-                                borderRadius: '8px',
-                                marginBottom: '8px',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                            }}
-                        >
-                            <span style={{ fontWeight: 'bold' }}>{user.name}</span>
-                        </li>
-                    ))}
+                    {users.map((user) => {
+                        // 💡 自分自身かどうかを判定
+                        const isMe = currentUser?.id === user.id;
+
+                        return (
+                            <li
+                                key={user.id}
+                                style={{
+                                    padding: '15px',
+                                    borderBottom: '1px solid #eee',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    backgroundColor: '#fff',
+                                    borderRadius: '8px',
+                                    marginBottom: '8px',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                                }}
+                            >
+                                <span style={{ fontWeight: 'bold' }}>{user.name}</span>
+
+                                {/* 💡 自分以外のユーザーにだけフォローボタンを表示する */}
+                                {!isMe && (
+                                    <button
+                                        onClick={() => handleToggleFollow(user.id)}
+                                        style={{
+                                            padding: '6px 12px',
+                                            borderRadius: '999px',
+                                            cursor: 'pointer',
+                                            fontWeight: 'bold',
+                                            // フォロー中なら白抜きのデザインに切り替える
+                                            backgroundColor: user.is_following ? 'white' : '#222',
+                                            color: user.is_following ? '#222' : 'white',
+                                            border: '1px solid #222'
+                                        }}
+                                    >
+                                        {user.is_following ? 'フォロー解除' : 'フォローする'}
+                                    </button>
+                                )}
+                            </li>
+                        );
+                    })}
                 </ul>
             )}
 
-            {/* 💡 修正：「ローディング中じゃない時だけ」という条件(!isLoading)を追加し、チラつきを防止。背景色も削除。 */}
             {!isLoading && users.length === 0 && !error && (
                 <p style={{ color: '#b00020', fontWeight: 'bold', marginTop: '10px' }}>
                     見つかりませんでした
