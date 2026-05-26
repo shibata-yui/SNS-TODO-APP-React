@@ -4,13 +4,13 @@ import { fetchPosts } from "../api/posts";
 import { updateProfile } from "../api/profile";
 import { apiFetch } from "../api/client";
 import { fetchLikedPosts } from "../api/likes";
-import { fetchBookmarkedPosts } from "../api/bookmarks"; // 💡 追加：ブックマーク一覧を取得するツール
+import { fetchBookmarkedPosts } from "../api/bookmarks";
 
 export function ProfilePage() {
   const { user, refreshMe } = useAuth();
   const [myPosts, setMyPosts] = useState([]);
   const [likedPosts, setLikedPosts] = useState([]);
-  const [bookmarkedPosts, setBookmarkedPosts] = useState([]); // 💡 追加：ブックマークした投稿を入れる箱
+  const [bookmarkedPosts, setBookmarkedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [profileStats, setProfileStats] = useState({ followings_count: 0, followers_count: 0 });
 
@@ -36,7 +36,6 @@ export function ProfilePage() {
         const likedData = await fetchLikedPosts();
         setLikedPosts(likedData);
 
-        // 💡 追加：自分がブックマークした投稿も取得しておく
         const bookmarkData = await fetchBookmarkedPosts();
         setBookmarkedPosts(bookmarkData);
 
@@ -78,7 +77,6 @@ export function ProfilePage() {
     }
   }
 
-  // 💡 修正：3つのタブのどれが選ばれているかで、表示するデータを切り替える
   let displayedPosts = [];
   if (activeTab === "myPosts") {
     displayedPosts = myPosts;
@@ -134,7 +132,6 @@ export function ProfilePage() {
             >
               いいね
             </button>
-            {/* 💡 追加：ブックマーク用のタブボタン */}
             <button
               style={activeTab === "bookmarkedPosts" ? styles.activeTab : styles.inactiveTab}
               onClick={() => setActiveTab("bookmarkedPosts")}
@@ -155,7 +152,6 @@ export function ProfilePage() {
             <div style={styles.postList}>
               {displayedPosts.map(post => (
                 <div key={post.id} style={styles.postItem}>
-                  {/* いいね・ブックマークタブの時は、誰の投稿か分かるように名前を出す */}
                   {(activeTab === "likedPosts" || activeTab === "bookmarkedPosts") && post.user && (
                     <p style={styles.postAuthor}>👤 {post.user.name}さんの投稿</p>
                   )}
@@ -181,21 +177,4 @@ const styles = {
   iconPlaceholder: { width: 100, height: 100, background: "#eef0f6", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" },
   userName: { margin: "0 0 12px", fontSize: 24 },
   bio: { margin: "0 0 24px", color: "#555", whiteSpace: "pre-wrap", lineHeight: 1.6 },
-  stats: { display: "flex", justifyContent: "center", gap: 32, marginBottom: 24, color: "#555" },
-  editButton: { padding: "10px 24px", borderRadius: 20, border: "1px solid #ccc", background: "white", cursor: "pointer", fontWeight: "bold", fontSize: 14 },
-  editForm: { display: "flex", flexDirection: "column", gap: 16, alignItems: "center", marginBottom: 16 },
-  input: { width: "80%", padding: "10px", borderRadius: 8, border: "1px solid #ddd", fontSize: 16, textAlign: "center" },
-  editBioInput: { width: "80%", minHeight: 100, padding: "12px", borderRadius: 8, border: "1px solid #ddd", fontSize: 15, resize: "vertical" },
-  actionArea: { display: "flex", gap: 12 },
-  saveButton: { padding: "10px 24px", borderRadius: 20, border: "none", background: "#222", color: "white", cursor: "pointer", fontWeight: "bold" },
-  cancelButton: { padding: "10px 24px", borderRadius: 20, border: "1px solid #ccc", background: "white", cursor: "pointer", fontWeight: "bold", color: "#333" },
-  postCard: { background: "white", borderRadius: 12, padding: "0 24px 24px 24px", boxShadow: "0 6px 18px rgba(0,0,0,0.06)" },
-  postList: { display: "grid", gap: 16, marginTop: 16 },
-  postItem: { border: "1px solid #eef0f6", borderRadius: 12, padding: 16, background: "#fff" },
-  content: { margin: "0 0 12px", whiteSpace: "pre-wrap", lineHeight: 1.5 },
-  date: { fontSize: 12, color: "#888" },
-  tabContainer: { display: "flex", borderBottom: "1px solid #eef0f6", marginBottom: "16px" },
-  activeTab: { flex: 1, padding: "16px", background: "none", border: "none", borderBottom: "3px solid #222", cursor: "pointer", fontWeight: "bold", fontSize: "16px", color: "#222" },
-  inactiveTab: { flex: 1, padding: "16px", background: "none", border: "none", borderBottom: "3px solid transparent", cursor: "pointer", fontWeight: "normal", fontSize: "16px", color: "#888" },
-  postAuthor: { margin: "0 0 8px 0", fontSize: 14, fontWeight: "bold", color: "#555" }
-};
+  stats: { display: "flex", justifyContent: "center", gap: 32, marginBottom
