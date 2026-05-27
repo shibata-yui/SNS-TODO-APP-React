@@ -29,3 +29,17 @@ export function fetchMe(token) {
     },
   });
 }
+
+// 特定のユーザーがフォローしている人達のリストを取得
+export function fetchFollowings(userId) {
+  return apiFetch(`/users/${userId}/followings`, {
+    method: "GET",
+  });
+}
+
+// 特定のユーザーをフォローしている人達（フォロワー）のリストを取得
+export function fetchFollowers(userId) {
+  return apiFetch(`/users/${userId}/followers`, {
+    method: "GET",
+  });
+}

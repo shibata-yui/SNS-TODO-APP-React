@@ -5,6 +5,7 @@ import { updateProfile } from "../api/profile";
 import { apiFetch } from "../api/client";
 import { fetchLikedPosts } from "../api/likes";
 import { fetchBookmarkedPosts } from "../api/bookmarks";
+import { fetchFollowings, fetchFollowers } from "../api/auth";
 
 export function ProfilePage() {
   const { user, refreshMe } = useAuth();
@@ -20,6 +21,13 @@ export function ProfilePage() {
 
   const [activeTab, setActiveTab] = useState("myPosts");
 
+  // モーダル（ポップアップ窓）の開閉を管理する状態
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [userList, setUserList] = useState([]);
+  const [modalLoading, setModalLoading] = useState(false);
+
+  // プロフィールデータの初期読み込み用
   useEffect(() => {
     async function loadProfileData() {
       try {
@@ -50,6 +58,49 @@ export function ProfilePage() {
         loadProfileData();
     }
   }, [user]);
+
+  // 💡 追加：モーダル表示時に背景スクロールを固定・解除する制御ロジック
+  useEffect(() => {
+    if (modalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [modalOpen]);
+
+  // フォロー中リストをクリックしたときの処理
+  async function handleShowFollowings() {
+    setModalTitle("フォロー中");
+    setModalOpen(true);
+    setModalLoading(true);
+    try {
+      const data = await fetchFollowings(user.id);
+      setUserList(data || []);
+    } catch (error) {
+      console.error("フォロー中取得エラー:", error);
+    } finally {
+      setModalLoading(false);
+    }
+  }
+
+  // フォロワーリストをクリックしたときの処理
+  async function handleShowFollowers() {
+    setModalTitle("フォロワー");
+    setModalOpen(true);
+    setModalLoading(true);
+    try {
+      const data = await fetchFollowers(user.id);
+      setUserList(data || []);
+    } catch (error) {
+      console.error("フォロワー取得エラー:", error);
+    } finally {
+      setModalLoading(false);
+    }
+  }
 
   function startEdit() {
     setEditName(user?.name || "");
@@ -108,17 +159,23 @@ export function ProfilePage() {
             <>
               <h1 style={styles.userName}>{user?.name || "ユーザー名"}</h1>
               <p style={styles.bio}>{user?.bio || "自己紹介文はまだ設定されていません。"}</p>
+
+              {/* 変更：数字部分にクリック可能なイベントと手袋カーソルを追加 */}
               <div style={styles.stats}>
-                <span><strong style={{fontSize: 18}}>{profileStats.followings_count}</strong> フォロー</span>
-                <span><strong style={{fontSize: 18}}>{profileStats.followers_count}</strong> フォロワー</span>
+                <span onClick={handleShowFollowings} style={styles.statsLink}>
+                  <strong style={{fontSize: 18}}>{profileStats.followings_count}</strong> フォロー
+                </span>
+                <span onClick={handleShowFollowers} style={styles.statsLink}>
+                  <strong style={{fontSize: 18}}>{profileStats.followers_count}</strong> フォロワー
+                </span>
               </div>
+
               <button onClick={startEdit} style={styles.editButton}>プロフィールを編集</button>
             </>
           )}
         </div>
 
         <div style={styles.postCard}>
-
           <div style={styles.tabContainer}>
             <button
               style={activeTab === "myPosts" ? styles.activeTab : styles.inactiveTab}
@@ -166,6 +223,35 @@ export function ProfilePage() {
         </div>
 
       </div>
+
+      {/* ユーザー一覧を表示するポップアップモーダル */}
+      {modalOpen && (
+        <div style={styles.modalOverlay} onClick={() => setModalOpen(false)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h3>{modalTitle}</h3>
+              <button style={styles.closeButton} onClick={() => setModalOpen(false)}>✕</button>
+            </div>
+
+            <div style={styles.modalBody}>
+              {modalLoading ? (
+                <p style={{ textAlign: "center", color: "#888" }}>読み込み中...</p>
+              ) : userList.length === 0 ? (
+                <p style={{ textAlign: "center", color: "#888", padding: "20px 0" }}>対象のユーザーがいません。</p>
+              ) : (
+                <div style={styles.userListContainer}>
+                  {userList.map((u) => (
+                    <div key={u.id} style={styles.userItem}>
+                      <div style={styles.smallIcon}>👤</div>
+                      <div style={styles.modalUserName}>{u.name}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -178,6 +264,8 @@ const styles = {
   userName: { margin: "0 0 12px", fontSize: 24 },
   bio: { margin: "0 0 24px", color: "#555", whiteSpace: "pre-wrap", lineHeight: 1.6 },
   stats: { display: "flex", justifyContent: "center", gap: 32, marginBottom: 24, color: "#555" },
+  // リンク用テキストのスタイル
+  statsLink: { cursor: "pointer", padding: "4px 8px", borderRadius: 4, transition: "background 0.2s" },
   editButton: { padding: "10px 24px", borderRadius: 20, border: "1px solid #ccc", background: "white", cursor: "pointer", fontWeight: "bold", fontSize: 14 },
   editForm: { display: "flex", flexDirection: "column", gap: 16, alignItems: "center", marginBottom: 16 },
   input: { width: "80%", padding: "10px", borderRadius: 8, border: "1px solid #ddd", fontSize: 16, textAlign: "center" },
@@ -193,5 +281,16 @@ const styles = {
   tabContainer: { display: "flex", borderBottom: "1px solid #eef0f6", marginBottom: "16px" },
   activeTab: { flex: 1, padding: "16px", background: "none", border: "none", borderBottom: "3px solid #222", cursor: "pointer", fontWeight: "bold", fontSize: "16px", color: "#222" },
   inactiveTab: { flex: 1, padding: "16px", background: "none", border: "none", borderBottom: "3px solid transparent", cursor: "pointer", fontWeight: "normal", fontSize: "16px", color: "#888" },
-  postAuthor: { margin: "0 0 8px 0", fontSize: 14, fontWeight: "bold", color: "#555" }
+  postAuthor: { margin: "0 0 8px 0", fontSize: 14, fontWeight: "bold", color: "#555" },
+
+  // モーダル用スタイル群
+  modalOverlay: { position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0, 0, 0, 0.4)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 },
+  modalContent: { background: "white", width: "90%", maxWidth: 400, borderRadius: 12, overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.15)" },
+  modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: "1px solid #eef0f6" },
+  closeButton: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#888" },
+  modalBody: { maxHeight: 300, overflowY: "auto", padding: "10px 20px" },
+  userListContainer: { display: "flex", flexDirection: "column", gap: 12 },
+  userItem: { display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid #f6f7fb" },
+  smallIcon: { width: 36, height: 36, background: "#eef0f6", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 },
+  modalUserName: { fontSize: 16, fontWeight: "bold", color: "#333" }
 };
