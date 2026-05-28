@@ -6,6 +6,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { RegisterPage } from "./pages/RegisterPage";
 import UserSearchPage from './pages/UserSearchPage';
+import { PostDetailPage } from "./pages/PostDetailPage";
 
 function Header() {
   const { isLoggedIn, logout, user } = useAuth();
@@ -13,7 +14,9 @@ function Header() {
   return (
     <header style={styles.header}>
       <div style={styles.inner}>
-        <div style={styles.brand}>SNS + ToDo</div>
+        <Link to="/posts" style={styles.brand}>
+          SNS + ToDo
+        </Link>
 
         <nav style={styles.nav}>
           {isLoggedIn ? (
@@ -116,6 +119,15 @@ function AppRoutes() {
         />
 
         <Route
+  path="/posts/:postId"
+  element={
+    <ProtectedRoute>
+      <PostDetailPage />
+    </ProtectedRoute>
+  }
+/>
+
+        <Route
           path="/users"
           element={
             <UserSearchPage />
@@ -171,7 +183,11 @@ const styles = {
     alignItems: "center",
     justifyContent: "space-between",
   },
-  brand: { fontWeight: 800 },
+  brand: {
+    fontWeight: 800,
+    color: "#111",
+    textDecoration: "none",
+  },
   nav: { display: "flex", gap: 12, alignItems: "center" },
   link: {
     textDecoration: "none",

@@ -8,6 +8,7 @@ import {
   toggleBookmark,
 } from "../api/posts";
 import { useAuth } from "../auth/AuthContext";
+import { Link } from "react-router-dom";
 
 export function PostPage() {
   const { user } = useAuth();
@@ -238,7 +239,11 @@ export function PostPage() {
 
                         <div style={styles.date}>
                           投稿日時：{post.created_at ? new Date(post.created_at).toLocaleString() : "不明"}
-                        </div>
+                          </div>
+
+                          <Link to={`/posts/${post.id}`} style={styles.detailLink}>
+                            詳細・コメントを見る
+                          </Link>
 
                         {isOwnPost && (
                           <div style={styles.actionArea}>
@@ -293,4 +298,16 @@ const styles = {
   reactionArea: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" },
   reactionButton: { padding: "6px 10px", borderRadius: 999, border: "1px solid #ddd", background: "white", cursor: "pointer" },
   activeReactionButton: { padding: "6px 10px", borderRadius: 999, border: "1px solid #222", background: "#222", color: "white", cursor: "pointer" },
+
+detailLink: {
+  display: "inline-block",
+  marginTop: 10,
+  padding: "7px 10px",
+  borderRadius: 8,
+  border: "1px solid #ddd",
+  color: "#111",
+  textDecoration: "none",
+  background: "white",
+},
+
 };
