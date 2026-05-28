@@ -36,3 +36,31 @@ export function toggleBookmark(postId) {
     method: "POST",
   });
 }
+
+//投稿詳細取得
+export function fetchPost(id) {
+  return apiFetch(`/posts/${id}`);
+}
+
+//コメント投稿
+export function createComment(postId, payload) {
+  return apiFetch(`/posts/${postId}/comments`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+//コメント更新(編集)
+export function updateComment(commentId, payload) {
+  return apiFetch(`/comments/${commentId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+//コメント削除
+export function deleteComment(commentId) {
+  return apiFetch(`/comments/${commentId}`, {
+    method: "DELETE",
+  });
+}
