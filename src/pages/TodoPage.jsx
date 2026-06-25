@@ -1,9 +1,5 @@
-// function nowIso() {
-//   return new Date().toISOString();
-// }
 
 import { useMemo, useState, useEffect } from "react";
-// import sampleTodos from "../mock/todos.sample.json";
 import { TodoStats } from "../components/TodoStats";
 import { TodoToolbar } from "../components/TodoToolbar";
 import { TodoList } from "../components/TodoList";
@@ -11,12 +7,10 @@ import { TodoForm } from "../components/TodoForm";
 import { ViewToggle } from "../components/ViewToggle";
 import { TodoCalendar } from "../components/TodoCalendar";
 // バックと繋ぐにあたって追記↓
-// import { useEffect } from "react";
 import { fetchTodos, createTodo, updateTodo, deleteTodo, deleteCompletedTodos} from "../api/todos";
 import { useAuth } from "../auth/AuthContext";
 
 export function TodoPage() {
-  // const [todos, setTodos] = useState(sampleTodos);
   // バックと繋ぐにあたって変更
   const { user } = useAuth();
   const [todos, setTodos] = useState([]);
@@ -95,11 +89,8 @@ useEffect(() => {
   // バックと繋ぐにあたって変更
   async function handleCreate(payload) {
     try {
-      console.log("送信するデータ:", payload);
 
       const newTodo = await createTodo(payload);
-
-      console.log("保存できたデータ:", newTodo);
 
       setTodos((prev) => [newTodo, ...prev]);
     } catch (error) {
@@ -129,7 +120,6 @@ useEffect(() => {
       ...patch,
     };
 
-    console.log("更新で送信するデータ:", payload);
 
     const updatedTodo = await updateTodo(id, payload);
 
