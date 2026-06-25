@@ -12,7 +12,7 @@ import { ViewToggle } from "../components/ViewToggle";
 import { TodoCalendar } from "../components/TodoCalendar";
 // バックと繋ぐにあたって追記↓
 // import { useEffect } from "react";
-import { fetchTodos, createTodo, updateTodo, deleteTodo } from "../api/todos";
+import { fetchTodos, createTodo, updateTodo, deleteTodo, deleteCompletedTodos} from "../api/todos";
 import { useAuth } from "../auth/AuthContext";
 
 export function TodoPage() {
@@ -156,13 +156,16 @@ useEffect(() => {
 
 
   // ✅ 完了タスク一括削除
-// バックと繋ぐにあたって変更
-// これは今の時点では画面側だけで削除しています
-  // 本当にDBからも消したいなら、あとでLaravel側に一括削除APIが必要！！
-  function handleBulkDeleteDone() {
-    setTodos((prev) => prev.filter((t) => t.status !== "completed"));
-  }
+  async function handleBulkDeleteDone() {
+  try {
+    await deleteCompletedTodos();
 
+    setTodos((prev) => prev.filter((t) => t.status !== "completed"));
+  } catch (error) {
+    console.error("完了タスク一括削除エラー:", error);
+    alert("完了タスクの一括削除に失敗しました。");
+  }
+}
 
 
   // ✅ カテゴリ別表示用にまとめる
