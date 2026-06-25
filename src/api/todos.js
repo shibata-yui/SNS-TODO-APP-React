@@ -19,3 +19,7 @@ export function updateTodo(id, payload) {
 export function deleteTodo(id) {
   return apiFetch(`/todos/${id}`, { method: "DELETE" });
 }
+
+export function deleteCompletedTodos() {
+  return apiFetch("/todos/completed", { method: "DELETE" });
+}
