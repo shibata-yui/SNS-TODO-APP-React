@@ -7,6 +7,8 @@ import {
   deleteComment,
 } from "../api/posts";
 import { useAuth } from "../auth/AuthContext";
+// 💡 追加：共通モーダルをインポート
+import { ConfirmModal } from "../components/ConfirmModal";
 
 export function PostDetailPage() {
   const { postId } = useParams();
@@ -17,6 +19,18 @@ export function PostDetailPage() {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentContent, setEditingCommentContent] = useState("");
   const [error, setError] = useState("");
+
+  // 💡 追加：モーダルの状態を管理するState
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: null,
+    isDanger: false,
+    onConfirm: null,
+  });
+
+  // 💡 追加：モーダルを閉じるための共通処理
+  const closeModal = () => setModal({ ...modal, isOpen: false });
 
   useEffect(() => {
     loadPost();
@@ -93,24 +107,35 @@ export function PostDetailPage() {
     }
   }
 
-  async function handleDeleteComment(commentId) {
-    if (!confirm("このコメントを削除しますか？")) {
-      return;
-    }
+  // 💡 変更：いきなり削除せず、モーダルを開く設定をセットする
+  function handleDeleteComment(commentId) {
+    setModal({
+      isOpen: true,
+      title: "コメントの削除",
+      message: (
+        <>
+          このコメントを削除してもよろしいですか？<br />
+          この操作は取り消せません。
+        </>
+      ),
+      isDanger: true,
+      onConfirm: async () => {
+        closeModal(); // まずモーダルを閉じる
+        try {
+          await deleteComment(commentId);
 
-    try {
-      await deleteComment(commentId);
-
-      setPost((prev) => ({
-        ...prev,
-        comments: (prev.comments || []).filter(
-          (comment) => comment.id !== commentId
-        ),
-      }));
-    } catch (error) {
-      console.error("コメント削除エラー:", error);
-      alert("コメントの削除に失敗しました。");
-    }
+          setPost((prev) => ({
+            ...prev,
+            comments: (prev.comments || []).filter(
+              (comment) => comment.id !== commentId
+            ),
+          }));
+        } catch (error) {
+          console.error("コメント削除エラー:", error);
+          alert("コメントの削除に失敗しました。");
+        }
+      },
+    });
   }
 
   if (error) {
@@ -248,129 +273,41 @@ export function PostDetailPage() {
           )}
         </div>
       </div>
+
+      {/* 💡 追加：ページの一番下にモーダルコンポーネントを配置 */}
+      <ConfirmModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        isDanger={modal.isDanger}
+        confirmText="削除する"
+      />
     </div>
   );
 }
 
 const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "#f6f7fb",
-    padding: 16,
-  },
-  container: {
-    maxWidth: 980,
-    margin: "0 auto",
-    display: "grid",
-    gap: 16,
-    width: "100%",
-  },
-  card: {
-    background: "white",
-    borderRadius: 12,
-    padding: 16,
-    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-  },
-  title: {
-    margin: "0 0 12px",
-    fontSize: 28,
-  },
-  h2: {
-    margin: "0 0 12px",
-    fontSize: 18,
-  },
-  meta: {
-    fontSize: 13,
-    fontWeight: 700,
-    color: "#555",
-    marginBottom: 8,
-  },
-  content: {
-    margin: "0 0 12px",
-    whiteSpace: "pre-wrap",
-    lineHeight: 1.6,
-  },
-  date: {
-    fontSize: 12,
-    color: "#888",
-    marginTop: 6,
-  },
-  textarea: {
-    width: "100%",
-    minHeight: 90,
-    padding: 12,
-    borderRadius: 10,
-    border: "1px solid #ddd",
-    resize: "vertical",
-    boxSizing: "border-box",
-  },
-  button: {
-    marginTop: 10,
-    padding: "10px 14px",
-    borderRadius: 10,
-    border: "1px solid #222",
-    background: "#222",
-    color: "white",
-    cursor: "pointer",
-  },
-  cancelButton: {
-    marginTop: 10,
-    padding: "10px 14px",
-    borderRadius: 10,
-    border: "1px solid #ccc",
-    background: "white",
-    color: "#333",
-    cursor: "pointer",
-  },
-  smallButton: {
-    padding: "7px 10px",
-    borderRadius: 8,
-    border: "1px solid #ddd",
-    background: "white",
-    cursor: "pointer",
-  },
-  deleteButton: {
-    padding: "7px 10px",
-    borderRadius: 8,
-    border: "1px solid #ffb3b3",
-    background: "#fff3f3",
-    color: "#b00020",
-    cursor: "pointer",
-  },
-  backLink: {
-    color: "#111",
-    textDecoration: "none",
-    fontWeight: 700,
-  },
-  commentForm: {
-    marginBottom: 16,
-  },
-  commentList: {
-    display: "grid",
-    gap: 12,
-  },
-  commentItem: {
-    background: "#f6f7fb",
-    borderRadius: 10,
-    padding: 12,
-  },
-  commentMeta: {
-    fontSize: 13,
-    fontWeight: 700,
-    marginBottom: 6,
-  },
-  commentContent: {
-    margin: "0 0 8px",
-    whiteSpace: "pre-wrap",
-    lineHeight: 1.5,
-  },
-  actionArea: {
-    display: "flex",
-    gap: 8,
-    marginTop: 10,
-    flexWrap: "wrap",
-  },
-  error: {
-    color: "#b00020",
-  },
+  page: { minHeight: "100vh", background: "#f6f7fb", padding: 16 },
+  container: { maxWidth: 980, margin: "0 auto", display: "grid", gap: 16, width: "100%" },
+  card: { background: "white", borderRadius: 12, padding: 16, boxShadow: "0 6px 18px rgba(0,0,0,0.06)" },
+  title: { margin: "0 0 12px", fontSize: 28 },
+  h2: { margin: "0 0 12px", fontSize: 18 },
+  meta: { fontSize: 13, fontWeight: 700, color: "#555", marginBottom: 8 },
+  content: { margin: "0 0 12px", whiteSpace: "pre-wrap", lineHeight: 1.6 },
+  date: { fontSize: 12, color: "#888", marginTop: 6 },
+  textarea: { width: "100%", minHeight: 90, padding: 12, borderRadius: 10, border: "1px solid #ddd", resize: "vertical", boxSizing: "border-box" },
+  button: { marginTop: 10, padding: "10px 14px", borderRadius: 10, border: "1px solid #222", background: "#222", color: "white", cursor: "pointer" },
+  cancelButton: { marginTop: 10, padding: "10px 14px", borderRadius: 10, border: "1px solid #ccc", background: "white", color: "#333", cursor: "pointer" },
+  smallButton: { padding: "7px 10px", borderRadius: 8, border: "1px solid #ddd", background: "white", cursor: "pointer" },
+  deleteButton: { padding: "7px 10px", borderRadius: 8, border: "1px solid #ffb3b3", background: "#fff3f3", color: "#b00020", cursor: "pointer" },
+  backLink: { color: "#111", textDecoration: "none", fontWeight: 700 },
+  commentForm: { marginBottom: 16 },
+  commentList: { display: "grid", gap: 12 },
+  commentItem: { background: "#f6f7fb", borderRadius: 10, padding: 12 },
+  commentMeta: { fontSize: 13, fontWeight: 700, marginBottom: 6 },
+  commentContent: { margin: "0 0 8px", whiteSpace: "pre-wrap", lineHeight: 1.5 },
+  actionArea: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" },
+  error: { color: "#b00020" },
 };

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom'; // 💡 追加：強制遷移用のツール
 import { apiFetch } from '../api/client';
-import { useAuth } from '../auth/AuthContext'; // 💡 追加：自分のログイン情報を取得するツール
-import { toggleFollow } from '../api/follows'; // 💡 追加：さっき作ったフォロー用の通信ツール
+import { useAuth } from '../auth/AuthContext';
+import { toggleFollow } from '../api/follows';
 
 const UserSearchPage = () => {
-    const { user: currentUser } = useAuth(); // 💡 現在ログインしている「自分」の情報を取得
+    // 💡 修正：authLoading と isLoggedIn も一緒に取り出す
+    const { user: currentUser, authLoading, isLoggedIn } = useAuth();
+
     const [users, setUsers] = useState([]);
     const [keyword, setKeyword] = useState('');
     const [searchedKeyword, setSearchedKeyword] = useState('');
@@ -12,8 +15,11 @@ const UserSearchPage = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        fetchUsers();
-    }, []);
+        // 💡 修正：未ログインならそもそもデータを取得しに行かないようにする
+        if (isLoggedIn) {
+            fetchUsers();
+        }
+    }, [isLoggedIn]);
 
     const fetchUsers = async (searchWord = '') => {
         setIsLoading(true);
@@ -41,13 +47,10 @@ const UserSearchPage = () => {
         fetchUsers(keyword);
     };
 
-    // 💡 追加：フォローボタンが押された時の処理
     const handleToggleFollow = async (targetUserId) => {
         try {
-            // 裏側のAPIを叩く
             const result = await toggleFollow(targetUserId);
 
-            // 通信に成功したら、画面のリストを書き換えてボタンの見た目（フォロー中か否か）を更新する
             setUsers((prevUsers) =>
                 prevUsers.map((u) =>
                     u.id === targetUserId
@@ -60,6 +63,16 @@ const UserSearchPage = () => {
             alert('フォローの操作に失敗しました。');
         }
     };
+
+    // 💡 追加：認証状態の確認中は画面を白紙（またはローディング）にして見せない
+    if (authLoading) {
+        return <div style={{ textAlign: 'center', marginTop: '50px' }}>認証状態を確認中です...</div>;
+    }
+
+    // 💡 追加：ログインしていなければログイン画面へ弾き返す
+    if (!isLoggedIn) {
+        return <Navigate to="/login" replace />;
+    }
 
     return (
         <div style={{ maxWidth: '980px', margin: '0 auto', padding: '20px' }}>
@@ -108,7 +121,6 @@ const UserSearchPage = () => {
             ) : (
                 <ul style={{ listStyleType: 'none', padding: 0 }}>
                     {users.map((user) => {
-                        // 💡 自分自身かどうかを判定
                         const isMe = currentUser?.id === user.id;
 
                         return (
@@ -128,7 +140,6 @@ const UserSearchPage = () => {
                             >
                                 <span style={{ fontWeight: 'bold' }}>{user.name}</span>
 
-                                {/* 💡 自分以外のユーザーにだけフォローボタンを表示する */}
                                 {!isMe && (
                                     <button
                                         onClick={() => handleToggleFollow(user.id)}
@@ -137,7 +148,6 @@ const UserSearchPage = () => {
                                             borderRadius: '999px',
                                             cursor: 'pointer',
                                             fontWeight: 'bold',
-                                            // フォロー中なら白抜きのデザインに切り替える
                                             backgroundColor: user.is_following ? 'white' : '#222',
                                             color: user.is_following ? '#222' : 'white',
                                             border: '1px solid #222'

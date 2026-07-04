@@ -54,7 +54,6 @@ export function TodoToolbar({
             <option value="学習">学習</option>
         </select>
 
-
         {/* ✅ カテゴリ別表示（グループ表示） */}
         <label style={styles.checkbox}>
           <input type="checkbox" checked={groupByCategory} onChange={onToggleGroupByCategory} />
@@ -69,8 +68,8 @@ export function TodoToolbar({
           style={styles.dangerBtn}
           onClick={() => {
             if (doneCount === 0) return;
-            const ok = confirm(`完了タスク（${doneCount}件）を一括削除しますか？`);
-            if (ok) onBulkDeleteDone();
+            // 💡 修正：ブラウザのポップアップを消し、直接親（TodoPage）に削除の合図を送る
+            onBulkDeleteDone();
           }}
           disabled={doneCount === 0}
           title={doneCount === 0 ? "完了タスクがありません" : "完了タスクを一括削除"}

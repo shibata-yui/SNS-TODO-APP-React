@@ -21,7 +21,7 @@ export function ProfilePage() {
 
   const [activeTab, setActiveTab] = useState("myPosts");
 
-  // モーダル（ポップアップ窓）の開閉を管理する状態
+  // フォロー/フォロワー表示用のモーダル状態
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [userList, setUserList] = useState([]);
@@ -59,7 +59,7 @@ export function ProfilePage() {
     }
   }, [user]);
 
-  // 💡 追加：モーダル表示時に背景スクロールを固定・解除する制御ロジック
+  // モーダル表示時に背景スクロールを固定・解除する制御ロジック
   useEffect(() => {
     if (modalOpen) {
       document.body.style.overflow = "hidden";
@@ -119,11 +119,13 @@ export function ProfilePage() {
         name: editName,
         bio: editBio,
       });
-      alert("プロフィールを更新しました！");
       await refreshMe();
+
+      // 💡 修正：ポップアップを一切出さず、編集モードを閉じるだけで完了させる
       setIsEditing(false);
     } catch (error) {
       console.error("更新エラー:", error);
+      // エラー時は滅多に起きないので、ブラウザの標準アラートでシンプルに知らせるだけにする
       alert("保存に失敗しました。");
     }
   }
@@ -160,7 +162,6 @@ export function ProfilePage() {
               <h1 style={styles.userName}>{user?.name || "ユーザー名"}</h1>
               <p style={styles.bio}>{user?.bio || "自己紹介文はまだ設定されていません。"}</p>
 
-              {/* 変更：数字部分にクリック可能なイベントと手袋カーソルを追加 */}
               <div style={styles.stats}>
                 <span onClick={handleShowFollowings} style={styles.statsLink}>
                   <strong style={{fontSize: 18}}>{profileStats.followings_count}</strong> フォロー
@@ -264,7 +265,6 @@ const styles = {
   userName: { margin: "0 0 12px", fontSize: 24 },
   bio: { margin: "0 0 24px", color: "#555", whiteSpace: "pre-wrap", lineHeight: 1.6 },
   stats: { display: "flex", justifyContent: "center", gap: 32, marginBottom: 24, color: "#555" },
-  // リンク用テキストのスタイル
   statsLink: { cursor: "pointer", padding: "4px 8px", borderRadius: 4, transition: "background 0.2s" },
   editButton: { padding: "10px 24px", borderRadius: 20, border: "1px solid #ccc", background: "white", cursor: "pointer", fontWeight: "bold", fontSize: 14 },
   editForm: { display: "flex", flexDirection: "column", gap: 16, alignItems: "center", marginBottom: 16 },
@@ -283,7 +283,6 @@ const styles = {
   inactiveTab: { flex: 1, padding: "16px", background: "none", border: "none", borderBottom: "3px solid transparent", cursor: "pointer", fontWeight: "normal", fontSize: "16px", color: "#888" },
   postAuthor: { margin: "0 0 8px 0", fontSize: 14, fontWeight: "bold", color: "#555" },
 
-  // モーダル用スタイル群
   modalOverlay: { position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0, 0, 0, 0.4)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 },
   modalContent: { background: "white", width: "90%", maxWidth: 400, borderRadius: 12, overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.15)" },
   modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: "1px solid #eef0f6" },

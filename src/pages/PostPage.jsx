@@ -9,6 +9,8 @@ import {
 } from "../api/posts";
 import { useAuth } from "../auth/AuthContext";
 import { Link } from "react-router-dom";
+// 💡 追加：共通モーダルをインポート
+import { ConfirmModal } from "../components/ConfirmModal";
 
 export function PostPage() {
   const { user } = useAuth();
@@ -19,6 +21,18 @@ export function PostPage() {
   const [editingContent, setEditingContent] = useState("");
   const [error, setError] = useState("");
 
+  // 💡 追加：モーダルの状態を管理するState
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: null,
+    isDanger: false,
+    onConfirm: null,
+  });
+
+  // 💡 追加：モーダルを閉じるための共通処理
+  const closeModal = () => setModal({ ...modal, isOpen: false });
+
   useEffect(() => {
     loadPosts();
   }, []);
@@ -26,7 +40,6 @@ export function PostPage() {
   async function loadPosts() {
     try {
       const data = await fetchPosts();
-      // 💡 安全装置：データが配列でなければ空配列を入れる
       setPosts(Array.isArray(data) ? data : []);
       setError("");
     } catch (error) {
@@ -88,18 +101,29 @@ export function PostPage() {
     }
   }
 
-  async function handleDeletePost(postId) {
-    if (!confirm("この投稿を削除しますか？")) {
-      return;
-    }
-
-    try {
-      await deletePost(postId);
-      setPosts((prev) => prev.filter((post) => post.id !== postId));
-    } catch (error) {
-      console.error("投稿削除エラー:", error);
-      alert("投稿の削除に失敗しました。");
-    }
+  // 💡 変更：いきなり削除せず、モーダルを開く設定をセットする
+  function handleDeletePost(postId) {
+    setModal({
+      isOpen: true,
+      title: "投稿の削除",
+      message: (
+        <>
+          この投稿を削除してもよろしいですか？<br />
+          この操作は取り消せません。
+        </>
+      ),
+      isDanger: true,
+      onConfirm: async () => {
+        closeModal(); // まずモーダルを閉じる
+        try {
+          await deletePost(postId);
+          setPosts((prev) => prev.filter((post) => post.id !== postId));
+        } catch (error) {
+          console.error("投稿削除エラー:", error);
+          alert("投稿の削除に失敗しました。");
+        }
+      },
+    });
   }
 
   async function handleToggleLike(postId) {
@@ -177,7 +201,6 @@ export function PostPage() {
           ) : (
             <div style={styles.postList}>
               {posts.map((post) => {
-                // 💡 安全装置：postがnullやundefinedならスキップ
                 if (!post) return null;
 
                 const isOwnPost = user?.id === post.user_id;
@@ -258,6 +281,7 @@ export function PostPage() {
                             <button
                               type="button"
                               style={styles.deleteButton}
+                              // 💡 ここはそのまま。handleDeletePostの中身がすり替わっているのでモーダルが開く。
                               onClick={() => handleDeletePost(post.id)}
                             >
                               削除
@@ -273,6 +297,17 @@ export function PostPage() {
           )}
         </div>
       </div>
+
+      {/* 💡 追加：ページの一番下にモーダルコンポーネントを配置 */}
+      <ConfirmModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        isDanger={modal.isDanger}
+        confirmText="削除する"
+      />
     </div>
   );
 }
@@ -298,16 +333,5 @@ const styles = {
   reactionArea: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" },
   reactionButton: { padding: "6px 10px", borderRadius: 999, border: "1px solid #ddd", background: "white", cursor: "pointer" },
   activeReactionButton: { padding: "6px 10px", borderRadius: 999, border: "1px solid #222", background: "#222", color: "white", cursor: "pointer" },
-
-detailLink: {
-  display: "inline-block",
-  marginTop: 10,
-  padding: "7px 10px",
-  borderRadius: 8,
-  border: "1px solid #ddd",
-  color: "#111",
-  textDecoration: "none",
-  background: "white",
-},
-
+  detailLink: { display: "inline-block", marginTop: 10, padding: "7px 10px", borderRadius: 8, border: "1px solid #ddd", color: "#111", textDecoration: "none", background: "white" },
 };

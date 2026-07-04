@@ -8,6 +8,7 @@ export function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,7 +36,7 @@ export function LoginPage() {
     setError("");
     setSubmitting(true);
 
-    try {
+  	try {
       await login(email, password);
       navigate("/posts", { replace: true });
     } catch (error) {
@@ -64,22 +65,33 @@ export function LoginPage() {
             メールアドレス
             <input
               type="email"
-              style={styles.input}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="example@test.com"
+              // 💡 修正：半角カンマ(,)と全角カンマ(，)が入力されたら、強制的に半角ドット(.)に置き換える
+              onChange={(e) => setEmail(e.target.value.replace(/[,，]/g, "."))}
+              required
+              style={styles.input}
             />
           </label>
 
           <label style={styles.label}>
             パスワード
-            <input
-              type="password"
-              style={styles.input}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="パスワードを入力"
-            />
+            {/* ★アイコンを重ねるために relative のコンテナで囲みます */}
+            <div style={styles.passwordWrapper}>
+              <input
+                type={showPassword ? "text" : "password"} // ★状態によってtypeを切り替え
+                style={styles.inputWithIcon} // ★右側に余白を空けたスタイルに変更
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="パスワードを入力"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={styles.iconButton}
+              >
+                {showPassword ? "👁️" : "🙈"} {/* ★新規登録画面のアイコンに合わせて適宜変更してください */}
+              </button>
+            </div>
           </label>
 
           <button type="submit" style={styles.button} disabled={submitting}>
@@ -140,6 +152,33 @@ const styles = {
     border: "1px solid #d9dce8",
     outline: "none",
   },
+  /* ★ここからパスワードアイコン用のスタイルを追加 */
+  passwordWrapper: {
+    position: "relative",
+    display: "grid",
+  },
+  inputWithIcon: {
+    padding: "10px 40px 10px 12px", // 右側にアイコン分の余白（40px）を確保
+    borderRadius: 10,
+    border: "1px solid #d9dce8",
+    outline: "none",
+    width: "100%",
+    boxSizing: "border-box",
+  },
+  iconButton: {
+    position: "absolute",
+    right: "12px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    fontSize: "18px",
+    padding: 0,
+    display: "flex",
+    alignItems: "center",
+  },
+  /* ★ここまで */
   button: {
     padding: "12px 16px",
     borderRadius: 10,

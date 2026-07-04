@@ -59,8 +59,14 @@ export function AuthProvider({ children }) {
         await logoutApi(token);
       }
     } catch (error) {
-      console.error("ログアウトAPIエラー:", error);
+      // 💡 修正：401エラー（未認証/すでにログアウト済み）の場合は赤いエラーを出さず、ログだけ残してスルーする
+      if (error.message && error.message.includes("401")) {
+        console.log("バックエンドではすでにログアウト済みでした（正常な動作です）。");
+      } else {
+        console.error("ログアウトAPIエラー:", error);
+      }
     } finally {
+      // APIのエラー有無に関わらず、React側のデータは必ずリセットする（ここは元のまま完璧です）
       setUser(null);
       setToken(null);
       localStorage.removeItem(STORAGE_KEY);

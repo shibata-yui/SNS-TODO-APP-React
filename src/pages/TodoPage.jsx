@@ -1,4 +1,3 @@
-
 import { useMemo, useState, useEffect } from "react";
 import { TodoStats } from "../components/TodoStats";
 import { TodoToolbar } from "../components/TodoToolbar";
@@ -6,51 +5,52 @@ import { TodoList } from "../components/TodoList";
 import { TodoForm } from "../components/TodoForm";
 import { ViewToggle } from "../components/ViewToggle";
 import { TodoCalendar } from "../components/TodoCalendar";
-// バックと繋ぐにあたって追記↓
 import { fetchTodos, createTodo, updateTodo, deleteTodo, deleteCompletedTodos} from "../api/todos";
 import { useAuth } from "../auth/AuthContext";
+// 💡 追加：先ほど作った共通モーダルをインポート
+import { ConfirmModal } from "../components/ConfirmModal";
 
 export function TodoPage() {
-  // バックと繋ぐにあたって変更
   const { user } = useAuth();
   const [todos, setTodos] = useState([]);
 
-  const [view, setView] = useState("list"); // list / calendar
-  const [sortKey, setSortKey] = useState("due_date"); // due_date / priority / status
+  const [view, setView] = useState("list");
+  const [sortKey, setSortKey] = useState("due_date");
   const [query, setQuery] = useState("");
 
-  // ✅ 表示切替：ステータス/カテゴリ（=要件）
-  const [statusFilter, setStatusFilter] = useState("all"); // all / todo / in_progress / completed
-  const [categoryFilter, setCategoryFilter] = useState("all"); // all or category name
-  const [groupByCategory, setGroupByCategory] = useState(false); // カテゴリ別表示
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [groupByCategory, setGroupByCategory] = useState(false);
 
+  // 💡 追加：モーダルの状態を管理するState
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    isDanger: false,
+    onConfirm: null, // OKが押された時に実行する関数を丸ごと保存する箱
+  });
 
-// 最初に一覧を取得(※バックと繋ぐにあたって追記)
-useEffect(() => {
+  // 💡 追加：モーダルを閉じるための共通処理
+  const closeModal = () => setModal({ ...modal, isOpen: false });
+
+  useEffect(() => {
     async function loadTodos() {
       try {
         const data = await fetchTodos();
-
-        // 💡 ここから石橋を叩く処理（安全装置）に変更
         if (Array.isArray(data)) {
-          // ちゃんとリスト（配列）で返ってきたらセットする
           setTodos(data);
         } else {
-          // リストじゃない謎のデータ（エラー文など）が返ってきたら、画面を落とさず空っぽにする
           console.error("Laravelから予期せぬデータが返ってきました:", data);
           setTodos([]);
         }
-        // 💡 ここまで
-
       } catch (error) {
         console.error("ToDo一覧取得エラー:", error);
         alert("ToDo一覧の取得に失敗しました。Laravel側が起動しているか確認してください。");
       }
     }
-
     loadTodos();
   }, []);
-
 
   const categories = useMemo(() => {
     const set = new Set();
@@ -73,7 +73,6 @@ useEffect(() => {
       );
     }
 
-    // ✅ 要件：優先度順 / ステータス順 / 期限順
     list.sort((a, b) => {
       if (sortKey === "priority") return (b.priority ?? 0) - (a.priority ?? 0);
       if (sortKey === "status") return String(a.status).localeCompare(String(b.status));
@@ -85,13 +84,9 @@ useEffect(() => {
     return list;
   }, [todos, sortKey, query, statusFilter, categoryFilter]);
 
-  // ✅ 作成
-  // バックと繋ぐにあたって変更
   async function handleCreate(payload) {
     try {
-
       const newTodo = await createTodo(payload);
-
       setTodos((prev) => [newTodo, ...prev]);
     } catch (error) {
       console.error("ToDo追加エラー:", error);
@@ -99,66 +94,78 @@ useEffect(() => {
     }
   }
 
-  // ✅ 編集（更新）
-// バックとつなぐにあたって変更
   async function handleUpdate(id, patch) {
-  try {
-    const targetTodo = todos.find((todo) => todo.id === id);
-
-    if (!targetTodo) {
-      alert("更新対象のToDoが見つかりません。");
-      return;
-    }
-
-    const payload = {
-      title: targetTodo.title,
-      description: targetTodo.description,
-      priority: targetTodo.priority,
-      due_date: targetTodo.due_date,
-      status: targetTodo.status,
-      category: targetTodo.category,
-      ...patch,
-    };
-
-
-    const updatedTodo = await updateTodo(id, payload);
-
-    setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? updatedTodo : todo))
-    );
-  } catch (error) {
-    console.error("ToDo更新エラー:", error);
-    alert(`ToDoの更新に失敗しました。\n${error.message}`);
-  }
-}
-
-  // ✅ 削除（1件）
-// バックと繋ぐにあたって変更
- async function handleDelete(id) {
     try {
-      await deleteTodo(id);
-      setTodos((prev) => prev.filter((t) => t.id !== id));
+      const targetTodo = todos.find((todo) => todo.id === id);
+      if (!targetTodo) {
+        alert("更新対象のToDoが見つかりません。");
+        return;
+      }
+      const payload = {
+        title: targetTodo.title,
+        description: targetTodo.description,
+        priority: targetTodo.priority,
+        due_date: targetTodo.due_date,
+        status: targetTodo.status,
+        category: targetTodo.category,
+        ...patch,
+      };
+
+      const updatedTodo = await updateTodo(id, payload);
+      setTodos((prev) =>
+        prev.map((todo) => (todo.id === id ? updatedTodo : todo))
+      );
     } catch (error) {
-      console.error("ToDo削除エラー:", error);
-      alert("ToDoの削除に失敗しました。");
+      console.error("ToDo更新エラー:", error);
+      alert(`ToDoの更新に失敗しました。\n${error.message}`);
     }
   }
 
-
-  // ✅ 完了タスク一括削除
-  async function handleBulkDeleteDone() {
-  try {
-    await deleteCompletedTodos();
-
-    setTodos((prev) => prev.filter((t) => t.status !== "completed"));
-  } catch (error) {
-    console.error("完了タスク一括削除エラー:", error);
-    alert("完了タスクの一括削除に失敗しました。");
+  // 💡 変更：いきなり削除せず、モーダルを開く設定をセットする
+  function handleDelete(id) {
+    setModal({
+      isOpen: true,
+      title: "ToDoの削除",
+      message: (
+        <>
+          このToDoを削除してもよろしいですか？<br />
+          この操作は取り消せません。
+        </>
+      ),
+      isDanger: true,
+      onConfirm: async () => {
+        closeModal(); // まずモーダルを閉じる
+        try {
+          await deleteTodo(id);
+          setTodos((prev) => prev.filter((t) => t.id !== id));
+        } catch (error) {
+          console.error("ToDo削除エラー:", error);
+          alert("ToDoの削除に失敗しました。");
+        }
+      },
+    });
   }
-}
 
+  // 💡 変更：完了タスク一括削除も同様に、まずはモーダルを開く
+  function handleBulkDeleteDone() {
+    setModal({
+      isOpen: true,
+      title: "完了タスクの一括削除",
+      message: "完了済みのタスクをすべて削除してもよろしいですか？",
+      isDanger: true,
+      onConfirm: async () => {
+        closeModal();
+        try {
+          await deleteCompletedTodos();
+          setTodos((prev) => prev.filter((t) => t.status !== "completed"));
+        } catch (error) {
+          console.error("完了タスク一括削除エラー:", error);
+          alert("完了タスクの一括削除に失敗しました。");
+        }
+      },
+    });
+  }
 
-  // ✅ カテゴリ別表示用にまとめる
   const groupedByCategoryList = useMemo(() => {
     const map = new Map();
     for (const t of filtered) {
@@ -174,7 +181,6 @@ useEffect(() => {
       <div style={styles.container}>
         <h1 style={styles.title}>ToDo</h1>
 
-        {/* ✅ 統計表示（テキストでシンプル） */}
         <TodoStats todos={todos} />
 
         <div style={styles.card}>
@@ -229,6 +235,17 @@ useEffect(() => {
           <TodoForm onSubmit={handleCreate} submitLabel="追加" />
         </div>
       </div>
+
+      {/* 💡 追加：ページの一番下にモーダルコンポーネントを配置 */}
+      <ConfirmModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        isDanger={modal.isDanger}
+        confirmText="削除する"
+      />
     </div>
   );
 }

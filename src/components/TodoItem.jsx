@@ -91,10 +91,8 @@ export function TodoItem({ todo, onUpdate, onDelete, currentUserId }) {
             <button
               type="button"
               style={styles.dangerBtn}
-              onClick={() => {
-                const ok = confirm("このタスクを削除しますか？");
-                if (ok) onDelete?.(todo.id);
-              }}
+              // 💡 修正：ブラウザのポップアップを消し、直接実行する
+              onClick={() => onDelete?.(todo.id)}
             >
               削除
             </button>
