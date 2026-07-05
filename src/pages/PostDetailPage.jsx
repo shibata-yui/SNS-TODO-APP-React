@@ -32,6 +32,16 @@ export function PostDetailPage() {
   // 💡 追加：モーダルを閉じるための共通処理
   const closeModal = () => setModal({ ...modal, isOpen: false });
 
+  const openAlertModal = (message) => {
+  setModal({
+    isOpen: true,
+    title: "入力エラー",
+    message,
+    isDanger: false,
+    onConfirm: closeModal,
+  });
+};
+
   useEffect(() => {
     loadPost();
   }, [postId]);
@@ -51,7 +61,7 @@ export function PostDetailPage() {
     e.preventDefault();
 
     if (!commentContent.trim()) {
-      alert("コメントを入力してください。");
+      openAlertModal("コメントを入力してください。");
       return;
     }
 
@@ -68,7 +78,7 @@ export function PostDetailPage() {
       setCommentContent("");
     } catch (error) {
       console.error("コメント作成エラー:", error);
-      alert("コメントの作成に失敗しました。");
+      openAlertModal("コメントの作成に失敗しました。");
     }
   }
 
@@ -84,7 +94,7 @@ export function PostDetailPage() {
 
   async function handleUpdateComment(commentId) {
     if (!editingCommentContent.trim()) {
-      alert("コメントを入力してください。");
+      openAlertModal("コメントを入力してください。");
       return;
     }
 
@@ -103,7 +113,7 @@ export function PostDetailPage() {
       cancelEditComment();
     } catch (error) {
       console.error("コメント更新エラー:", error);
-      alert("コメントの更新に失敗しました。");
+      openAlertModal("コメントの更新に失敗しました。");
     }
   }
 
@@ -132,7 +142,7 @@ export function PostDetailPage() {
           }));
         } catch (error) {
           console.error("コメント削除エラー:", error);
-          alert("コメントの削除に失敗しました。");
+          openAlertModal("コメントの削除に失敗しました。");
         }
       },
     });
@@ -275,15 +285,16 @@ export function PostDetailPage() {
       </div>
 
       {/* 💡 追加：ページの一番下にモーダルコンポーネントを配置 */}
-      <ConfirmModal
-        isOpen={modal.isOpen}
-        onClose={closeModal}
-        onConfirm={modal.onConfirm}
-        title={modal.title}
-        message={modal.message}
-        isDanger={modal.isDanger}
-        confirmText="削除する"
-      />
+     <ConfirmModal
+  isOpen={modal.isOpen}
+  onClose={closeModal}
+  onConfirm={modal.onConfirm}
+  title={modal.title}
+  message={modal.message}
+  isDanger={modal.isDanger}
+  confirmText={modal.isDanger ? "削除する" : "OK"}
+  showCancel={modal.isDanger}
+    />
     </div>
   );
 }

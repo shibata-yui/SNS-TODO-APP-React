@@ -34,6 +34,16 @@ export function TodoPage() {
   // 💡 追加：モーダルを閉じるための共通処理
   const closeModal = () => setModal({ ...modal, isOpen: false });
 
+  const openAlertModal = (message) => {
+  setModal({
+    isOpen: true,
+    title: "エラー",
+    message,
+    isDanger: false,
+    onConfirm: closeModal,
+  });
+};
+
   useEffect(() => {
     async function loadTodos() {
       try {
@@ -46,7 +56,7 @@ export function TodoPage() {
         }
       } catch (error) {
         console.error("ToDo一覧取得エラー:", error);
-        alert("ToDo一覧の取得に失敗しました。Laravel側が起動しているか確認してください。");
+        openAlertModal("ToDo一覧の取得に失敗しました。Laravel側が起動しているか確認してください。");
       }
     }
     loadTodos();
@@ -90,7 +100,7 @@ export function TodoPage() {
       setTodos((prev) => [newTodo, ...prev]);
     } catch (error) {
       console.error("ToDo追加エラー:", error);
-      alert(`ToDoの追加に失敗しました。\n${error.message}`);
+      openAlertModal(`ToDoの追加に失敗しました。\n${error.message}`);
     }
   }
 
@@ -98,7 +108,7 @@ export function TodoPage() {
     try {
       const targetTodo = todos.find((todo) => todo.id === id);
       if (!targetTodo) {
-        alert("更新対象のToDoが見つかりません。");
+        openAlertModal("更新対象のToDoが見つかりません。");
         return;
       }
       const payload = {
@@ -117,7 +127,7 @@ export function TodoPage() {
       );
     } catch (error) {
       console.error("ToDo更新エラー:", error);
-      alert(`ToDoの更新に失敗しました。\n${error.message}`);
+      openAlertModal(`ToDoの更新に失敗しました。\n${error.message}`);
     }
   }
 
@@ -140,7 +150,7 @@ export function TodoPage() {
           setTodos((prev) => prev.filter((t) => t.id !== id));
         } catch (error) {
           console.error("ToDo削除エラー:", error);
-          alert("ToDoの削除に失敗しました。");
+          openAlertModal("ToDoの削除に失敗しました。");
         }
       },
     });
@@ -160,7 +170,7 @@ export function TodoPage() {
           setTodos((prev) => prev.filter((t) => t.status !== "completed"));
         } catch (error) {
           console.error("完了タスク一括削除エラー:", error);
-          alert("完了タスクの一括削除に失敗しました。");
+          openAlertModal("完了タスクの一括削除に失敗しました。");
         }
       },
     });
@@ -244,7 +254,8 @@ export function TodoPage() {
         title={modal.title}
         message={modal.message}
         isDanger={modal.isDanger}
-        confirmText="削除する"
+        confirmText={modal.isDanger ? "削除する" : "OK"}
+        showCancel={modal.isDanger}
       />
     </div>
   );

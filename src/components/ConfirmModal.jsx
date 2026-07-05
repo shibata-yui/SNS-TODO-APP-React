@@ -9,6 +9,7 @@ export function ConfirmModal({
   confirmText = "OK",
   cancelText = "キャンセル",
   isDanger = false,
+  showCancel = true,
 }) {
   if (!isOpen) return null;
 
@@ -23,12 +24,15 @@ export function ConfirmModal({
             onClick={onConfirm}
             style={isDanger ? styles.dangerButton : styles.confirmButton}
           >
-            {confirmText}
+          {confirmText}
           </button>
+
+        {showCancel && (
           <button onClick={onClose} style={styles.cancelButton}>
             {cancelText}
-          </button>
-        </div>
+      </button>
+      )}
+      </div>
       </div>
     </div>
   );
