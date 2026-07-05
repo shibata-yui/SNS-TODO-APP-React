@@ -33,6 +33,16 @@ export function PostPage() {
   // 💡 追加：モーダルを閉じるための共通処理
   const closeModal = () => setModal({ ...modal, isOpen: false });
 
+  const openAlertModal = (message) => {
+  setModal({
+    isOpen: true,
+    title: "入力エラー",
+    message,
+    isDanger: false,
+    onConfirm: closeModal,
+  });
+};
+
   useEffect(() => {
     loadPosts();
   }, []);
@@ -51,9 +61,10 @@ export function PostPage() {
   async function handleCreatePost(e) {
     e.preventDefault();
 
+    // 💡 変更：いきなり削除せず、モーダルを開く設定をセットする
     if (!content.trim()) {
-      alert("投稿内容を入力してください。");
-      return;
+    openAlertModal("投稿内容を入力してください。");
+    return;
     }
 
     try {
@@ -65,7 +76,7 @@ export function PostPage() {
       setContent("");
     } catch (error) {
       console.error("投稿作成エラー:", error);
-      alert("投稿の作成に失敗しました。");
+      openAlertModal("投稿の作成に失敗しました。");
     }
   }
 
@@ -81,9 +92,9 @@ export function PostPage() {
 
   async function handleUpdatePost(postId) {
     if (!editingContent.trim()) {
-      alert("投稿内容を入力してください。");
-      return;
-    }
+  openAlertModal("投稿内容を入力してください。");
+  return;
+}
 
     try {
       const updatedPost = await updatePost(postId, {
@@ -97,7 +108,7 @@ export function PostPage() {
       cancelEdit();
     } catch (error) {
       console.error("投稿更新エラー:", error);
-      alert("投稿の更新に失敗しました。");
+      openAlertModal("投稿の更新に失敗しました。");
     }
   }
 
@@ -120,7 +131,7 @@ export function PostPage() {
           setPosts((prev) => prev.filter((post) => post.id !== postId));
         } catch (error) {
           console.error("投稿削除エラー:", error);
-          alert("投稿の削除に失敗しました。");
+          openAlertModal("投稿の削除に失敗しました。");
         }
       },
     });
@@ -145,7 +156,7 @@ export function PostPage() {
       );
     } catch (error) {
       console.error("いいね切り替えエラー:", error);
-      alert("いいねの切り替えに失敗しました。");
+      openAlertModal("いいねの切り替えに失敗しました。");
     }
   }
 
@@ -165,7 +176,7 @@ export function PostPage() {
       );
     } catch (error) {
       console.error("ブックマーク切り替えエラー:", error);
-      alert("ブックマークの切り替えに失敗しました。");
+      openAlertModal("ブックマークの切り替えに失敗しました。");
     }
   }
 
@@ -300,14 +311,15 @@ export function PostPage() {
 
       {/* 💡 追加：ページの一番下にモーダルコンポーネントを配置 */}
       <ConfirmModal
-        isOpen={modal.isOpen}
-        onClose={closeModal}
-        onConfirm={modal.onConfirm}
-        title={modal.title}
-        message={modal.message}
-        isDanger={modal.isDanger}
-        confirmText="削除する"
-      />
+  isOpen={modal.isOpen}
+  onClose={closeModal}
+  onConfirm={modal.onConfirm}
+  title={modal.title}
+  message={modal.message}
+  isDanger={modal.isDanger}
+  confirmText={modal.isDanger ? "削除する" : "OK"}
+  showCancel={modal.isDanger}
+/>
     </div>
   );
 }

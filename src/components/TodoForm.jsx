@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ConfirmModal } from "./ConfirmModal";
 
 export function TodoForm({
   onSubmit,
@@ -12,11 +13,20 @@ export function TodoForm({
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState("todo");
   const [category, setCategory] = useState("仕事");
-  const [error, setError] = useState("");
 
-  // ✅ 編集時：初期値を入れる
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
+
+  const closeModal = () => {
+    setModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
   useEffect(() => {
     if (!initialValues) return;
+
     setTitle(initialValues.title ?? "");
     setDescription(initialValues.description ?? "");
     setPriority(initialValues.priority ?? 2);
@@ -29,10 +39,13 @@ export function TodoForm({
     e.preventDefault();
 
     if (!title.trim()) {
-      setError("タイトルは必須です");
+      setModal({
+        isOpen: true,
+        title: "入力エラー",
+        message: "タイトルを入力してください。",
+      });
       return;
     }
-    setError("");
 
     const payload = {
       title: title.trim(),
@@ -45,7 +58,6 @@ export function TodoForm({
 
     onSubmit?.(payload);
 
-    // ✅ 新規作成のときだけリセット（編集時は閉じる想定が多いのでリセットしない）
     if (!initialValues) {
       setTitle("");
       setDescription("");
@@ -57,67 +69,102 @@ export function TodoForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} style={styles.form}>
-      {error ? <div style={styles.error}>{error}</div> : null}
-
-      <label style={styles.label}>
-        タイトル（必須）
-        <input style={styles.input} value={title} onChange={(e) => setTitle(e.target.value)} />
-      </label>
-
-      <label style={styles.label}>
-        説明
-        <textarea style={styles.textarea} value={description} onChange={(e) => setDescription(e.target.value)} />
-      </label>
-
-      <div style={styles.grid}>
+    <>
+      <form onSubmit={handleSubmit} style={styles.form}>
         <label style={styles.label}>
-          優先度
-          <select style={styles.input} value={priority} onChange={(e) => setPriority(e.target.value)}>
-            <option value={1}>低</option>
-            <option value={2}>中</option>
-            <option value={3}>高</option>
-          </select>
-        </label>
-
-        <label style={styles.label}>
-          期限
-          <input style={styles.input} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-        </label>
-
-        <label style={styles.label}>
-          ステータス
-          <select style={styles.input} value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="todo">未着手</option>
-            <option value="in_progress">進行中</option>
-            <option value="completed">完了</option>
-          </select>
-        </label>
-
-        <label style={styles.label}>
-        カテゴリ
-          <select
+          タイトル（必須）
+          <input
             style={styles.input}
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}>
-
-            <option value="仕事">仕事</option>
-            <option value="プライベート">プライベート</option>
-            <option value="学習">学習</option>
-          </select>
-
-          <div style={{ fontSize: 12, opacity: 0.6 }}>例：仕事</div>
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
         </label>
 
-      </div>
+        <label style={styles.label}>
+          説明
+          <textarea
+            style={styles.textarea}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </label>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <button type="submit" style={styles.button}>{submitLabel}</button>
-        {onCancel ? (
-          <button type="button" style={styles.ghost} onClick={onCancel}>キャンセル</button>
-        ) : null}
-      </div>
-    </form>
+        <div style={styles.grid}>
+          <label style={styles.label}>
+            優先度
+            <select
+              style={styles.input}
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+            >
+              <option value={1}>低</option>
+              <option value={2}>中</option>
+              <option value={3}>高</option>
+            </select>
+          </label>
+
+          <label style={styles.label}>
+            期限
+            <input
+              style={styles.input}
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </label>
+
+          <label style={styles.label}>
+            ステータス
+            <select
+              style={styles.input}
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="todo">未着手</option>
+              <option value="in_progress">進行中</option>
+              <option value="completed">完了</option>
+            </select>
+          </label>
+
+          <label style={styles.label}>
+            カテゴリ
+            <select
+              style={styles.input}
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="仕事">仕事</option>
+              <option value="プライベート">プライベート</option>
+              <option value="学習">学習</option>
+            </select>
+
+            <div style={{ fontSize: 12, opacity: 0.6 }}>例：仕事</div>
+          </label>
+        </div>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="submit" style={styles.button}>
+            {submitLabel}
+          </button>
+
+          {onCancel ? (
+            <button type="button" style={styles.ghost} onClick={onCancel}>
+              キャンセル
+            </button>
+          ) : null}
+        </div>
+      </form>
+
+      <ConfirmModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={closeModal}
+        title={modal.title}
+        message={modal.message}
+        confirmText="OK"
+        showCancel={false}
+      />
+    </>
   );
 }
 
@@ -125,9 +172,31 @@ const styles = {
   form: { display: "grid", gap: 12 },
   grid: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 },
   label: { display: "grid", gap: 6, fontSize: 12, opacity: 0.85 },
-  input: { padding: "10px 12px", borderRadius: 10, border: "1px solid #e6e7ef", outline: "none" },
-  textarea: { minHeight: 80, padding: "10px 12px", borderRadius: 10, border: "1px solid #e6e7ef", outline: "none" },
-  button: { padding: "10px 12px", borderRadius: 10, border: "1px solid #e6e7ef", background: "white", cursor: "pointer" },
-  ghost: { padding: "10px 12px", borderRadius: 10, border: "1px solid #e6e7ef", background: "#fafbff", cursor: "pointer" },
-  error: { padding: 10, borderRadius: 10, background: "#fff3f3", border: "1px solid #ffd3d3", color: "#b00020" },
+  input: {
+    padding: "10px 12px",
+    borderRadius: 10,
+    border: "1px solid #e6e7ef",
+    outline: "none",
+  },
+  textarea: {
+    minHeight: 80,
+    padding: "10px 12px",
+    borderRadius: 10,
+    border: "1px solid #e6e7ef",
+    outline: "none",
+  },
+  button: {
+    padding: "10px 12px",
+    borderRadius: 10,
+    border: "1px solid #e6e7ef",
+    background: "white",
+    cursor: "pointer",
+  },
+  ghost: {
+    padding: "10px 12px",
+    borderRadius: 10,
+    border: "1px solid #e6e7ef",
+    background: "#fafbff",
+    cursor: "pointer",
+  },
 };
