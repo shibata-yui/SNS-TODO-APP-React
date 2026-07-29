@@ -6,6 +6,7 @@ import { apiFetch } from "../api/client";
 import { fetchLikedPosts } from "../api/likes";
 import { fetchBookmarkedPosts } from "../api/bookmarks";
 import { fetchFollowings, fetchFollowers } from "../api/auth";
+import { ConfirmModal } from "../components/ConfirmModal";
 
 export function ProfilePage() {
   const { user, refreshMe } = useAuth();
@@ -19,15 +20,18 @@ export function ProfilePage() {
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
 
-  const [activeTab, setActiveTab] = useState("myPosts");
+  // 💡 追加：画像アップロード用の状態
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
-  // フォロー/フォロワー表示用のモーダル状態
+  const [activeTab, setActiveTab] = useState("myPosts");
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [userList, setUserList] = useState([]);
   const [modalLoading, setModalLoading] = useState(false);
 
-  // プロフィールデータの初期読み込み用
   useEffect(() => {
     async function loadProfileData() {
       try {
@@ -46,7 +50,6 @@ export function ProfilePage() {
 
         const bookmarkData = await fetchBookmarkedPosts();
         setBookmarkedPosts(bookmarkData);
-
       } catch (error) {
         console.error("取得エラー:", error);
       } finally {
@@ -59,20 +62,17 @@ export function ProfilePage() {
     }
   }, [user]);
 
-  // モーダル表示時に背景スクロールを固定・解除する制御ロジック
   useEffect(() => {
     if (modalOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
-
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [modalOpen]);
 
-  // フォロー中リストをクリックしたときの処理
   async function handleShowFollowings() {
     setModalTitle("フォロー中");
     setModalOpen(true);
@@ -87,7 +87,6 @@ export function ProfilePage() {
     }
   }
 
-  // フォロワーリストをクリックしたときの処理
   async function handleShowFollowers() {
     setModalTitle("フォロワー");
     setModalOpen(true);
@@ -105,27 +104,79 @@ export function ProfilePage() {
   function startEdit() {
     setEditName(user?.name || "");
     setEditBio(user?.bio || "");
+    // 💡 編集開始時は画像の選択状態をリセット
+    setAvatarFile(null);
+    setAvatarPreview(null);
     setIsEditing(true);
   }
 
   function cancelEdit() {
+    // 💡 キャンセル時もリセット
+    setAvatarFile(null);
+    setAvatarPreview(null);
     setIsEditing(false);
   }
 
-  async function handleSave(e) {
+  // 💡 追加：画像ファイルが選ばれた時の処理（プレビュー用）
+  function handleImageChange(e) {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file)); // プレビュー用のURLを生成
+    }
+  }
+
+async function handleSave(e) {
     e.preventDefault();
     try {
+      // 1. テキスト情報の更新
       await updateProfile({
         name: editName,
         bio: editBio,
       });
-      await refreshMe();
 
-      // 💡 修正：ポップアップを一切出さず、編集モードを閉じるだけで完了させる
+      // 2. 画像の更新
+      if (avatarFile) {
+        const formData = new FormData();
+        formData.append("avatar", avatarFile);
+
+        const savedAuth = localStorage.getItem("sns_todo_auth");
+        let token = null;
+        if (savedAuth) {
+          try {
+            token = JSON.parse(savedAuth).token;
+          } catch(err) {}
+        }
+
+        // 💡 修正：fetchの結果を「res」という箱で受け取る
+        const res = await fetch('http://localhost:8000/api/user/avatar', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+          },
+          body: formData,
+        });
+
+        // もしLaravelの検問（バリデーション）に引っかかった場合 (422エラー)
+        if (res.status === 422) {
+          // 💡 修正：alertの代わりにモーダルのスイッチをONにする
+          setIsErrorModalOpen(true);
+          return;
+        }
+
+        // それ以外の予期せぬエラーの場合
+        if (!res.ok) {
+          throw new Error("画像の保存に失敗しました");
+        }
+      }
+
+      // 💡 エラーなく通過した場合のみ、最新の情報を読み直して画面を閉じる
+      await refreshMe();
       setIsEditing(false);
+
     } catch (error) {
       console.error("更新エラー:", error);
-      // エラー時は滅多に起きないので、ブラウザの標準アラートでシンプルに知らせるだけにする
       alert("保存に失敗しました。");
     }
   }
@@ -139,17 +190,36 @@ export function ProfilePage() {
     displayedPosts = bookmarkedPosts;
   }
 
+  // 💡 ユーザーの画像URL（画像がない場合はnull）
+  // ※LaravelのストレージURLを指定。ポートが違う場合は修正してください。
+  const userAvatarUrl = user?.avatar ? `http://localhost:8000/storage/${user.avatar}` : null;
+
   return (
     <div style={styles.page}>
       <div style={styles.container}>
 
         <div style={styles.profileCard}>
+          {/* 💡 アイコン表示部分の改修 */}
           <div style={styles.iconPlaceholder}>
-            <span style={{ fontSize: 40 }}>👤</span>
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="Preview" style={styles.avatarImage} />
+            ) : userAvatarUrl ? (
+              <img src={userAvatarUrl} alt="User Avatar" style={styles.avatarImage} />
+            ) : (
+              <span style={{ fontSize: 40 }}>👤</span>
+            )}
           </div>
 
           {isEditing ? (
             <form onSubmit={handleSave} style={styles.editForm}>
+              {/* 💡 ファイル選択ボタンを追加 */}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/gif"
+                onChange={handleImageChange}
+                style={styles.fileInput}
+              />
+
               <input value={editName} onChange={(e) => setEditName(e.target.value)} style={styles.input} placeholder="名前" required />
               <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} style={styles.editBioInput} placeholder="自己紹介文を入力してください" />
               <div style={styles.actionArea}>
@@ -178,24 +248,9 @@ export function ProfilePage() {
 
         <div style={styles.postCard}>
           <div style={styles.tabContainer}>
-            <button
-              style={activeTab === "myPosts" ? styles.activeTab : styles.inactiveTab}
-              onClick={() => setActiveTab("myPosts")}
-            >
-              自分の投稿
-            </button>
-            <button
-              style={activeTab === "likedPosts" ? styles.activeTab : styles.inactiveTab}
-              onClick={() => setActiveTab("likedPosts")}
-            >
-              いいね
-            </button>
-            <button
-              style={activeTab === "bookmarkedPosts" ? styles.activeTab : styles.inactiveTab}
-              onClick={() => setActiveTab("bookmarkedPosts")}
-            >
-              ブックマーク
-            </button>
+            <button style={activeTab === "myPosts" ? styles.activeTab : styles.inactiveTab} onClick={() => setActiveTab("myPosts")}>自分の投稿</button>
+            <button style={activeTab === "likedPosts" ? styles.activeTab : styles.inactiveTab} onClick={() => setActiveTab("likedPosts")}>いいね</button>
+            <button style={activeTab === "bookmarkedPosts" ? styles.activeTab : styles.inactiveTab} onClick={() => setActiveTab("bookmarkedPosts")}>ブックマーク</button>
           </div>
 
           {loading ? (
@@ -211,7 +266,15 @@ export function ProfilePage() {
               {displayedPosts.map(post => (
                 <div key={post.id} style={styles.postItem}>
                   {(activeTab === "likedPosts" || activeTab === "bookmarkedPosts") && post.user && (
-                    <p style={styles.postAuthor}>👤 {post.user.name}さんの投稿</p>
+                    <p style={styles.postAuthor}>
+                      {/* 💡 投稿一覧のアイコンも連動（簡易版） */}
+                      {post.user.avatar ? (
+                        <img src={`http://localhost:8000/storage/${post.user.avatar}`} alt="icon" style={styles.smallAvatarImage} />
+                      ) : (
+                        "👤 "
+                      )}
+                      {post.user.name}さんの投稿
+                    </p>
                   )}
                   <p style={styles.content}>{post.contents}</p>
                   <div style={styles.date}>
@@ -222,10 +285,9 @@ export function ProfilePage() {
             </div>
           )}
         </div>
-
       </div>
 
-      {/* ユーザー一覧を表示するポップアップモーダル */}
+      {/* ユーザー一覧モーダル（省略せずそのまま） */}
       {modalOpen && (
         <div style={styles.modalOverlay} onClick={() => setModalOpen(false)}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -243,7 +305,14 @@ export function ProfilePage() {
                 <div style={styles.userListContainer}>
                   {userList.map((u) => (
                     <div key={u.id} style={styles.userItem}>
-                      <div style={styles.smallIcon}>👤</div>
+                      <div style={styles.smallIcon}>
+                        {/* 💡 モーダル内のアイコンも連動 */}
+                        {u.avatar ? (
+                          <img src={`http://localhost:8000/storage/${u.avatar}`} alt="icon" style={styles.smallAvatarImage} />
+                        ) : (
+                          "👤"
+                        )}
+                      </div>
                       <div style={styles.modalUserName}>{u.name}</div>
                     </div>
                   ))}
@@ -253,6 +322,16 @@ export function ProfilePage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={isErrorModalOpen}
+        onClose={() => setIsErrorModalOpen(false)}
+        onConfirm={() => setIsErrorModalOpen(false)}
+        title="画像のサイズエラー"
+        message="画像サイズが大きすぎます。容量2MB以内、縦横2000px×2000px以内のものを選択してください。"
+        showCancel={false}
+        isDanger={true}
+        confirmText="確認"
+      />
     </div>
   );
 }
@@ -261,7 +340,15 @@ const styles = {
   page: { minHeight: "100vh", background: "#f6f7fb", padding: "24px 16px" },
   container: { maxWidth: 600, margin: "0 auto", display: "grid", gap: 20, width: "100%" },
   profileCard: { background: "white", borderRadius: 12, padding: 32, textAlign: "center", boxShadow: "0 6px 18px rgba(0,0,0,0.06)" },
-  iconPlaceholder: { width: 100, height: 100, background: "#eef0f6", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" },
+
+  // 💡 変更：overflowをhiddenにして丸く切り抜く
+  iconPlaceholder: { width: 100, height: 100, background: "#eef0f6", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", overflow: "hidden" },
+
+  // 💡 追加：画像用のスタイル（枠いっぱいに表示）
+  avatarImage: { width: "100%", height: "100%", objectFit: "cover" },
+  smallAvatarImage: { width: 24, height: 24, borderRadius: "50%", objectFit: "cover", verticalAlign: "middle", marginRight: 8 },
+  fileInput: { marginBottom: 12, fontSize: 14 },
+
   userName: { margin: "0 0 12px", fontSize: 24 },
   bio: { margin: "0 0 24px", color: "#555", whiteSpace: "pre-wrap", lineHeight: 1.6 },
   stats: { display: "flex", justifyContent: "center", gap: 32, marginBottom: 24, color: "#555" },
@@ -282,7 +369,6 @@ const styles = {
   activeTab: { flex: 1, padding: "16px", background: "none", border: "none", borderBottom: "3px solid #222", cursor: "pointer", fontWeight: "bold", fontSize: "16px", color: "#222" },
   inactiveTab: { flex: 1, padding: "16px", background: "none", border: "none", borderBottom: "3px solid transparent", cursor: "pointer", fontWeight: "normal", fontSize: "16px", color: "#888" },
   postAuthor: { margin: "0 0 8px 0", fontSize: 14, fontWeight: "bold", color: "#555" },
-
   modalOverlay: { position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0, 0, 0, 0.4)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 },
   modalContent: { background: "white", width: "90%", maxWidth: 400, borderRadius: 12, overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.15)" },
   modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: "1px solid #eef0f6" },
